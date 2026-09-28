@@ -78,6 +78,10 @@ test('protocol routes stay consistent and status codes stay compact', async ({ p
     await expect(sheet.getByText('Chat Completions API', { exact: true })).toHaveCount(1)
     await expect(sheet.getByText('Responses API', { exact: true })).toHaveCount(id === 'mapped' ? 1 : 0)
     await expect(sheet.getByText('Gemini API', { exact: true })).toHaveCount(id === 'gemini' ? 1 : 0)
+    if (id === 'gemini') {
+      const colors = await sheet.locator('section').filter({ hasText: '协议链路' }).locator('span.rounded-full').evaluateAll((pills) => pills.map((pill) => getComputedStyle(pill).borderColor))
+      expect(new Set(colors).size).toBe(1)
+    }
     await expect(sheet.getByText('未转发', { exact: true })).toHaveCount(0)
     await expect(sheet.locator('section').filter({ hasText: '协议链路' }).getByRole('button')).toHaveCount(0)
     if (id === 'cancelled') await expect(sheet.getByText('客户端取消（499）', { exact: false })).toBeVisible()
@@ -95,6 +99,7 @@ test('assistant has four labelled bodies, exports metadata, and uses the new fil
   await expect(sheet.getByText('Chat Completions API', { exact: true })).toHaveCount(1)
   for (const title of ['① 助手内部请求', '② 后端转发', '③ 上游回传', '④ 返回助手引擎']) {
     await expect(sheet.getByRole('button', { name: new RegExp(title) })).toBeEnabled()
+    await expect(sheet.getByRole('button', { name: new RegExp(title) })).toHaveAttribute('aria-expanded', 'false')
   }
   await sheet.getByRole('button', { name: /④ 返回助手引擎/ }).click()
   await expect(sheet.locator('#chain-body-downstream')).toHaveAttribute('aria-hidden', 'false')
@@ -112,4 +117,32 @@ test('assistant has four labelled bodies, exports metadata, and uses the new fil
   await page.getByRole('option', { name: 'AI 助手', exact: true }).click()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('button', { name: /^查看请求 .* 详情$/ })).toHaveCount(1)
+})
+
+test('opening log details preserves list scroll and starts with all bodies collapsed', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 800 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  const rows = Array.from({ length: 20 }, (_, index) => ({ ...details[3], requestId: `row-${index}`, keyName: 'test-key', relayMode: 'transform', sourceFormat: 'openai', targetFormat: 'gemini', platform: 'gemini' }))
+  await page.route('**/api/admin/usage/logs?**', (route) => route.fulfill({ json: { ok: true, data: { items: rows, total: rows.length } } }))
+  await page.route('**/api/admin/usage/logs/row-*', (route) => route.fulfill({ json: { ok: true, data: rows.find((row) => route.request().url().endsWith(`/${row.requestId}`)) } }))
+  await page.reload()
+  const row = page.getByRole('button', { name: '查看请求 row-18 详情', exact: true })
+  await row.scrollIntoViewIfNeeded()
+  const scrollY = await page.evaluate(() => window.scrollY)
+  expect(scrollY).toBeGreaterThan(500)
+  await row.click()
+  const sheet = page.getByRole('dialog', { name: '调用详情' })
+  await expect(sheet.getByText('Gemini API', { exact: true })).toBeVisible()
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(scrollY)
+  for (const segment of ['incoming', 'outgoing', 'provider', 'downstream']) {
+    await expect(sheet.locator(`#chain-trigger-${segment}`)).toHaveAttribute('aria-expanded', 'false')
+  }
+  await sheet.locator('#chain-trigger-incoming').click()
+  await expect(sheet.locator('#chain-trigger-incoming')).toHaveAttribute('aria-expanded', 'true')
+  await page.keyboard.press('Escape')
+  await expect(sheet).not.toBeVisible()
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(scrollY)
+  await row.press('Enter')
+  await expect(sheet.locator('#chain-trigger-incoming')).toHaveAttribute('aria-expanded', 'false')
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(scrollY)
 })

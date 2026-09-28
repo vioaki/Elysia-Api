@@ -12,7 +12,7 @@ import { prettyPrintBody } from './body-helpers'
 
 export function ChainBodies({ detail }: { detail: UsageLogDetail }) {
   const internal = detail.relayMode === 'agent-assist'
-  const [openSegments, setOpenSegments] = useState<Set<string>>(() => new Set(['incoming']))
+  const [openSegments, setOpenSegments] = useState<Set<string>>(() => new Set())
   const segments: { key: string; title: string; body: UsageBody | undefined }[] = [
     { key: 'incoming', title: internal ? '① 助手内部请求' : '① 下游请求', body: detail.incomingBody },
     { key: 'outgoing', title: '② 后端转发', body: detail.outgoingBody },

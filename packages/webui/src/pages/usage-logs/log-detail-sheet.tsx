@@ -12,7 +12,7 @@ import { api } from '@/lib/api'
 import { useSources } from '@/lib/hooks'
 import { protocolLabel } from '@/lib/protocol'
 import type { UsageLogDetail } from '@/lib/types'
-import { cn, downloadJSON, formatDateTime, formatDuration, formatNumber } from '@/lib/utils'
+import { downloadJSON, formatDateTime, formatDuration, formatNumber } from '@/lib/utils'
 import { ChainBodies } from './log-detail/body-sections'
 import { buildExportPayload, errorKindLabel } from './log-detail/body-helpers'
 
@@ -109,10 +109,7 @@ export function LogDetailSheet({ id, onClose }: { id: string | null; onClose: ()
                   {protocols.map((protocol, index) => (
                     <Fragment key={protocol}>
                       {index > 0 && <MoveRight className="h-3 w-3 text-muted-foreground" aria-hidden />}
-                      <span className={cn(
-                        'max-w-full break-all rounded-full border px-2.5 py-[3px] font-mono text-2xs',
-                        index > 0 ? 'border-rose bg-wash text-rose' : 'border-input bg-card text-muted-foreground',
-                      )}>
+                      <span className="max-w-full break-all rounded-full border border-input bg-card px-2.5 py-[3px] font-mono text-2xs text-muted-foreground">
                         {protocol}
                       </span>
                     </Fragment>

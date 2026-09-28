@@ -225,6 +225,12 @@ body {
   overflow-x: clip;
 }
 
+/* 弹层锁滚动时保留整页内容高度，避免 body 的 100% 高度裁掉列表、将视口归零。 */
+body[data-scroll-locked] {
+  height: auto;
+  min-height: 100%;
+}
+
 /* 页面光晕：左上瑰梅 + 右下靛蓝 + 中右角色光环，极轻量 radial 挂在 fixed 伪元素上，不污染正文 */
 body::before {
   content: '';
