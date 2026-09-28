@@ -22,6 +22,7 @@ details.push(
     downstreamResponse: { ...emptyBody, content: '{"result":{"Text":"hello"}}' },
   },
   { ...base, requestId: 'cancelled', requestedModelGroup: 'chat', modelName: 'deepseek-flash', statusCode: 499, errorKind: 'client_canceled', error: 'context canceled', sourceFormat: 'openai', targetFormat: 'openai' },
+  { ...base, requestId: 'gemini', requestedModelGroup: 'chat', modelName: 'gemini-flash', platform: 'gemini', sourceFormat: 'openai', relayMode: 'transform' },
 )
 
 test.beforeEach(async ({ page }) => {
@@ -70,16 +71,19 @@ test('request model and route stay compact and missing models remain visible', a
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
 
-test('protocol aliases collapse, conversions remain distinct, and cancellations are labelled', async ({ page }) => {
-  for (const id of ['same', 'mapped', 'cancelled']) {
+test('protocol routes stay consistent and status codes stay compact', async ({ page }) => {
+  for (const id of ['same', 'mapped', 'cancelled', 'gemini']) {
     await page.getByRole('button', { name: `查看请求 ${id} 详情`, exact: true }).click()
     const sheet = page.getByRole('dialog', { name: '调用详情' })
     await expect(sheet.getByText('Chat Completions API', { exact: true })).toHaveCount(1)
     await expect(sheet.getByText('Responses API', { exact: true })).toHaveCount(id === 'mapped' ? 1 : 0)
+    await expect(sheet.getByText('Gemini API', { exact: true })).toHaveCount(id === 'gemini' ? 1 : 0)
+    await expect(sheet.getByText('未转发', { exact: true })).toHaveCount(0)
+    await expect(sheet.locator('section').filter({ hasText: '协议链路' }).getByRole('button')).toHaveCount(0)
     if (id === 'cancelled') await expect(sheet.getByText('客户端取消（499）', { exact: false })).toBeVisible()
     await sheet.getByRole('button', { name: '关闭', exact: true }).last().click()
   }
-  await expect(page.getByText('499 · 客户端取消', { exact: true })).toBeVisible()
+  await expect(page.getByText('499', { exact: true })).toBeVisible()
 })
 
 test('assistant has four labelled bodies, exports metadata, and uses the new filter name', async ({ page }, testInfo) => {

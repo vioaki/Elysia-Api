@@ -41,7 +41,7 @@ export function CodePill({ code, className }: { code: number; className?: string
         className,
       )}
     >
-      {code === 499 ? '499 · 客户端取消' : code}
+      {code}
     </span>
   )
 }

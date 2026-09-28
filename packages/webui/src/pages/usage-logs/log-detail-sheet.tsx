@@ -5,7 +5,6 @@ import {
   Download,
   MoveRight,
 } from 'lucide-react'
-import { CopyButton } from '@/components/copy-button'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetSectionTitle, SheetTitle } from '@/components/ui/sheet'
 import { useToast } from '@/components/ui/use-toast'
@@ -57,9 +56,10 @@ export function LogDetailSheet({ id, onClose }: { id: string | null; onClose: ()
   }
 
   const internal = detail?.relayMode === 'agent-assist'
+  const targetProtocol = protocolLabel(detail?.targetFormat || detail?.platform || '', 'long')
   const protocols = [...new Set([
     internal ? '' : protocolLabel(detail?.sourceFormat || detail?.inputFormat || '', 'long'),
-    protocolLabel(detail?.targetFormat || detail?.platform || '', 'long'),
+    targetProtocol,
   ].filter(Boolean))]
   const sourceName = sources?.find((source) => source.id === detail?.sourceId)?.name || detail?.sourceId
   const usage = detail?.usage
@@ -117,12 +117,9 @@ export function LogDetailSheet({ id, onClose }: { id: string | null; onClose: ()
                       </span>
                     </Fragment>
                   ))}
-                  {(internal || !detail.targetFormat) && (
+                  {(internal || (!detail.modelName && !targetProtocol)) && (
                     <span className="text-2xs text-muted-foreground">{internal ? '内部调用' : '未转发'}</span>
                   )}
-                  <span className="ml-2 inline-flex items-center gap-1 font-mono text-2xs text-muted-foreground">
-                    <CopyButton value={detail.requestId} />
-                  </span>
                 </div>
                 <dl className="mt-3 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-[7px] text-xs">
                   <dt className="whitespace-nowrap text-muted-foreground">调用方</dt>
