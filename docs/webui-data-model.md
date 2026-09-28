@@ -156,8 +156,10 @@ export interface UsageLogItem {
   startedAt: string
   keyName: string
   keyHash: string
+  requestedModelGroup: string // 原始请求模型，路由前失败也保留
   groupName: string
-  modelName: string
+  modelName: string // 实际命中模型；未路由时为空
+  sourceId?: string
   platform: string
   sourceFormat: string
   targetFormat: string

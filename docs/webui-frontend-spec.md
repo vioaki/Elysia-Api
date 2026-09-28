@@ -36,7 +36,9 @@ Usage 查询共用 `from`、`to`、`keyName`、`groupName`、`modelName` 等筛�
   `{model, requests, failed, tokens}[]`，按请求数降序、模型名升序。
 - `GET /api/admin/usage/logs`：分页明细；`status=success|failed` 提供语义状态筛选，
   `statusCode=<code>` 提供精确筛选，同时出现时精确状态码优先。
-- 成功定义为 `200 <= statusCode < 400`；其余状态均为失败。
+- 成功定义为 `200 <= statusCode < 400`；其余状态均为失败。`499` 表示完成前客户端取消（详情 `errorKind=client_canceled`），流式日志结果码不等于已发送的 HTTP 响应码。
+- 日志列表以 `requestedModelGroup` 展示请求模型，`modelName` / `sourceId` 展示实际路由；同协议链路只显示一个协议。
+- AI 助手日志（`relayMode=agent-assist`）四段正文依次为内部请求、后端转发、上游回传和返回引擎的结果，遵守统一正文保存策略。
 
 ## Pages
 

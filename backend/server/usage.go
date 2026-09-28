@@ -787,15 +787,13 @@ func parsePositiveInt(raw string, fallback int) int {
 }
 
 // observingStreamWriter 是下游观察者：包裹写回客户端的流式 writer，仅负责
-// 首字节计时与输出文本累积（本地 token 估算用）。事件捕获与 usage 提取由
+// 首字节计时。事件捕获与 usage 提取由
 // 上游观察者（upstreamUsageObservingBody）承担——若两者都写 ProviderResponse，
 // transform 模式下最终值取决于读写交错且记录的是下游渲染格式而非上游原文。
 type observingStreamWriter struct {
-	inner        relay.StreamResponseWriter
-	record       *usageRecord
-	startTime    time.Time
-	responseText strings.Builder
-	lines        sseLineSplitter
+	inner     relay.StreamResponseWriter
+	record    *usageRecord
+	startTime time.Time
 }
 
 func (w *observingStreamWriter) Write(data []byte) (int, error) {
@@ -809,8 +807,6 @@ func (w *observingStreamWriter) WriteString(data string) (int, error) {
 }
 
 func (w *observingStreamWriter) Flush() error {
-	// SSE 以空行分帧，Flush 时行必完整；冲刷残余缓冲防止最后一行丢失。
-	w.lines.flushRemainder(w.observeLine)
 	return w.inner.Flush()
 }
 
@@ -821,9 +817,6 @@ func (w *observingStreamWriter) observe(data []byte) {
 	if w.record.FirstByteMs == 0 && len(strings.TrimSpace(string(data))) > 0 {
 		w.record.FirstByteMs = time.Since(w.startTime).Milliseconds()
 	}
-	// 行缓冲：data: 载荷可能跨多次 Write 到达，按单次调用切行会把半截 JSON
-	// 当完整事件处理（详见 sseLineSplitter 注释）。
-	w.lines.feed(data, w.observeLine)
 }
 
 // sseDataPayload 解析 SSE 的 data: 行:返回净载荷;空行/[DONE]/非 data 行
@@ -838,12 +831,6 @@ func sseDataPayload(line string) (string, bool) {
 		return "", false
 	}
 	return payload, true
-}
-
-func (w *observingStreamWriter) observeLine(line string) {
-	if payload, ok := sseDataPayload(line); ok {
-		w.responseText.WriteString(extractOutputTextFromStreamPayload(payload))
-	}
 }
 
 // sseLineSplitter 缓冲跨 Read/Write 到达的字节，按完整行回调 onLine。
@@ -1133,14 +1120,6 @@ func extractOutputTextFromProviderBody(platform relay.Platform, format relay.For
 	return extractOutputTextFromPayload(payload)
 }
 
-func extractOutputTextFromStreamPayload(payload string) string {
-	var event map[string]interface{}
-	if err := json.Unmarshal([]byte(payload), &event); err != nil {
-		return ""
-	}
-	return extractOutputTextFromPayload(event)
-}
-
 // geminiTextFromCandidates 拼接 Gemini candidates[].content.parts[].text。
 func geminiTextFromCandidates(payload map[string]interface{}) string {
 	candidates, ok := payload["candidates"].([]interface{})
@@ -1265,7 +1244,6 @@ func numberFromUsageMap(raw map[string]interface{}, key string) float64 {
 func setRecordGroup(record *usageRecord, group *config.ModelGroupConfig) {
 	record.GroupID = group.ID
 	record.GroupName = group.Name
-	record.RequestedModelGroup = group.Name
 }
 
 func setRecordModel(record *usageRecord, model config.ModelRef, platform relay.Platform) {
