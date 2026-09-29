@@ -28,7 +28,7 @@ python scripts/login-trace/extract.py --limit 1
 
 ## 视觉标注与纠错
 
-实际审查轮次、已发现问题及验收边界见[历史审查记录](review-log.md)；自动生成报告不会宣称已经完成手工语义验收。
+重新生成后，结合审图器与 `report.json` 复查受影响帧及邻帧。自动指标不能代替人工语义验收。
 
 - `annotations.json` 包含四类语义区域：头发／发饰、面部、手部、服饰／其余装饰。
 - `sourceRegions`、`sourceExclusions` 是原始视频像素坐标；`targetRegions` 是 760 × 808 目标线稿像素坐标。

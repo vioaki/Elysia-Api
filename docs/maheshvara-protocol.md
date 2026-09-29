@@ -93,7 +93,7 @@ upstream wire → Maheshvara → client wire
 
 工具结果通过 `tool_call_id` 关联调用。Gemini 的 `functionResponse` 需要名称，无法从历史关联恢复时返回带消息索引和调用 ID 的转换错误。
 
-Responses 内建工具（例如搜索、文件、代码执行、图像生成）带有执行语义；目标协议无法表达时明确报错，不自动伪装为函数工具。DLC 蓝图不是已实现兼容层。
+Responses 内建工具（例如搜索、文件、代码执行、图像生成）带有执行语义；目标协议无法表达时明确报错，不自动伪装为函数工具。
 
 <a id="3-响应模型"></a>
 <a id="31-usage"></a>

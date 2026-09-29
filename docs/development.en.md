@@ -115,7 +115,7 @@ The backend build resolves the latest Git tag and injects it into `/health` thro
 - Include purpose, language switching, and an index link. Guides provide prerequisites, runnable examples, verification, and troubleshooting. References provide contracts, fields, examples, and limits.
 - Use “model source,” “model group,” “panel token,” and “relay token” consistently. Do not translate field names, endpoint paths, or CLI identifiers.
 - Label illustrative fragments with `jsonc`, `text`, or an explicit note. `json` blocks must parse. Use credential placeholders and do not commit real configuration, logs, or tokens.
-- Preserve paths and referenced heading anchors. English pages link to English topic pages. Keep historical records and proposals in their original language and state.
+- Preserve current documentation paths and referenced heading anchors. English pages link to English topic pages. Merge useful material from phase-specific design, review and acceptance records into maintained guides, then remove the old files and update references. Use Git history for historical details.
 
 The Chinese CLI reference is generated from command definitions and help renderers. Do not edit the generated output directly. Run from `backend/`:
 

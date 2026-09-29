@@ -26,7 +26,7 @@ Full extraction reads presentation timestamps from the MP4 decoder, not timers o
 
 ## Semantic annotations and corrections
 
-Actual review rounds, findings and acceptance limits are recorded in the [historical review log](review-log.md). Generated reports do not claim that manual semantic acceptance is complete.
+After regeneration, use the viewer and `report.json` to review affected frames and their neighbors. Automated metrics do not replace manual semantic acceptance.
 
 - `annotations.json` defines four semantic groups: hair/accessories, face, hands, and clothing/remaining decorations.
 - `sourceRegions` and `sourceExclusions` use source-video pixel coordinates; `targetRegions` use the 760 × 808 target line-art coordinates.

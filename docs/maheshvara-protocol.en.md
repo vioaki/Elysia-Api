@@ -82,7 +82,7 @@ Function definitions include `type: "function"`, `name`, `description`, `paramet
 
 Results link to calls through `tool_call_id`. Gemini `functionResponse` requires a name; if history cannot supply it, conversion fails with the message index and call ID.
 
-Responses built-in tools such as search, files, code execution, and image generation carry execution semantics. Unsupported targets produce explicit errors rather than pretending these are ordinary functions. The DLC blueprint is not an implemented compatibility layer.
+Responses built-in tools such as search, files, code execution, and image generation carry execution semantics. Unsupported targets produce explicit errors rather than pretending these are ordinary functions.
 
 ## Response model
 

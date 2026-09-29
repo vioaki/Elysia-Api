@@ -8,7 +8,7 @@ A React 18 + TypeScript management interface using Vite, Tailwind, Radix, SWR, R
 
 Manage sources, source models, groups, inference tokens, custom protocols and runtime settings. Inspect usage, request logs, system events and diagnostics. Use the built-in assistant for permission-controlled management tasks.
 
-Request details can show four bodies: inbound, forwarded, upstream response and downstream response. Saving depends on configuration; bodies are not saved by default. On-demand token reveal requires administrator access. See [WebUI conventions](../../docs/webui-frontend-spec.en.md) for pages and interactions.
+Request details can show four bodies: inbound, forwarded, upstream response and downstream response. Saving depends on configuration; bodies are not saved by default. On-demand token reveal requires administrator access.
 
 ## Prerequisites
 
@@ -49,6 +49,22 @@ Output is `packages/webui/dist/`. This command verifies login assets, then runs 
 
 To serve an external frontend build, point the backend `webuiDir` at that directory. Relative paths resolve from the configuration directory. The backend serves static files at `/ui/` without a history fallback, so keep HashRouter.
 
+## Implementation and interaction
+
+| Area | Source |
+| --- | --- |
+| Theme and global styles | [index.css](src/index.css) |
+| Tailwind mappings and breakpoints | [tailwind.config.js](tailwind.config.js) |
+| HashRouter routes | [App.tsx](src/App.tsx) |
+| Layout and navigation | [app-layout.tsx](src/components/app-layout.tsx) |
+| Management APIs and types | [Management API](../../docs/webui-api.en.md), [data model](../../docs/webui-data-model.en.md) |
+
+- Reuse existing theme variables and components. Use semantic HTML or Radix primitives, visible keyboard focus and appropriate accessible labels.
+- The mobile drawer closes through its button, backdrop, Esc or navigation. Restore focus on close and release the scroll lock when returning to desktop. Filters support arrow keys, Enter, Esc and Tab; clearing search keeps input focus.
+- Distinguish loading, empty and error states; an API failure must not look like an empty list. Log details distinguish uncaptured bodies, truncation and external media storage. Display times in the browser's local time zone.
+- Confirm deletion of sources, groups and tokens, and Usage resets. Clear secret inputs after saving and show only masked values in ordinary lists.
+- Preserve reduced-motion support and a working login fallback when assets fail to load. Static assets live in `public/`; macOS packaging also uses `logo.png`, so check packaging scripts when changing its path.
+
 ## Verification
 
 ```sh
@@ -60,7 +76,7 @@ npm run test:e2e --workspace @root/webui
 
 Browser tests start the frontend at `127.0.0.1:5274` with mock responses and test tokens; no real backend is required. They cover pagination, page correction after cleanup, retries, navigation focus, filter keyboard controls, Agent streams and narrow layouts in both themes. With Chrome installed, use `PLAYWRIGHT_CHANNEL=chrome npm run test:e2e --workspace @root/webui`.
 
-See the [acceptance checklist](../../docs/webui-acceptance.en.md) for manual checks and [trace production](../../scripts/login-trace/README.en.md) for asset edits.
+After interaction changes, check keyboard controls, narrow layouts, both themes and reduced motion. See [trace production](../../scripts/login-trace/README.en.md) for asset edits.
 
 ## Troubleshooting
 

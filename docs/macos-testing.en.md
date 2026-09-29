@@ -10,11 +10,7 @@ The App targets macOS 12+. The build host needs compatible Command Line Tools (o
 
 ## Toolchain and universal builds
 
-Apple documentation checked on 2026-09-14:
-
-- [Installing Command Line Tools](https://developer.apple.com/documentation/xcode/installing-the-command-line-tools): CLT can replace full Xcode and includes the macOS SDK/toolchain. Only one CLT version is installed at a time; updates replace it.
-- [Xcode support table](https://developer.apple.com/support/xcode/): choose a toolchain compatible with the build host. At that check, Xcode 26.6 supported macOS Tahoe 26.2–26.x hosts and macOS 11–26.5 deployment targets.
-- [Xcode 27 release notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-27-release-notes#Intel-Deprecation): Xcode itself runs only on Apple Silicon, while the macOS 27 SDK still supports Intel + Apple Silicon universal apps targeting macOS 12+. Missing local Intel libraries do not establish that universal support was removed.
+Follow Apple's [installation guide](https://developer.apple.com/documentation/xcode/installing-the-command-line-tools) to configure Command Line Tools, or use full Xcode. Check host OS and deployment-target compatibility in the [Xcode support table](https://developer.apple.com/support/xcode/).
 
 Run the standalone check before building backend binaries:
 
@@ -27,9 +23,7 @@ npm run build:macos-app -- --check-toolchain
 
 The build script selects Swift through `xcrun --sdk macosx` and actually links a minimal AppKit program for both architectures. Failure stops before removing an existing App or DMG. Normal builds perform the same preflight.
 
-In the recorded local CLT `27.0.0.0.1788430756` / Swift 6.4 installation, `libswiftCompatibility56.a` and `libswiftCompatibilityPacks.a` contained arm64/arm64e but lacked x86_64, preventing macOS 12 Intel linking. Older commits failed in the same environment. Selecting SDK 26.5 alone did not help because these libraries belong to the compiler toolchain. This observation concerns that installation, not every Xcode 27 installation.
-
-For this failure, sign in to Apple's [More Downloads](https://developer.apple.com/download/all/?q=command%20line%20tools) and install a compatible **Universal** CLT package, then rerun the check. The recorded CLT 26.6 stable download offered Apple silicon and Universal packages; this project's universal build used `Command_Line_Tools_26.6_Universal.dmg`. After installation, version `26.6.0.0.1781586589` supplied x86_64, arm64 and arm64e compatibility libraries and passed the dual-architecture preflight. Replacing CLT affects other projects using the host's default toolchain. If another full Xcode is installed, select it for one command:
+If Intel linking reports missing Swift compatibility libraries, check that the compiler toolchain includes libraries for both x86_64 and arm64. Switching SDKs alone may not resolve missing compiler compatibility libraries. Use Apple's [More Downloads](https://developer.apple.com/download/all/?q=command%20line%20tools) to choose a host-compatible toolchain with both architectures, such as Universal CLT, then rerun preflight. Replacing default CLT affects other local projects. If another full Xcode is installed, select it for one command:
 
 ```sh
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer npm run build:macos-app
@@ -89,12 +83,6 @@ These checks require the specified OS, permission or interaction. Automated test
 | System quit | Quit healthy and hung services with ⌘Q/system quit. Request graceful shutdown, then TERM after 8 seconds and KILL after another 3; leave no orphan child. Quit is temporarily disabled during installation replacement. |
 | Updates | Test no update, offline, missing DMG, bad digest, cancellation, read-only destination, replacement failure and success. Preserve the old version or recoverable backup. Reopen at overview while retaining geometry, theme, config, database and key. Validation works without CLT. |
 | WebKit export | Export logs, cancel saving and close the window during download. Complete the export or report a clear error; open external links in the default browser. |
-
-## Historical verification record
-
-The following records the environment on 2026-09-14. It does not mean later versions or this documentation change have rerun these tests.
-
-On Apple Silicon / macOS 26.6.2 with CLT 26.6 Universal, the recorded run passed 69 native integration checks, 19 real-backend panel checks, seven browser regression cases and WebUI lint. Both `npm run build` and `npm run build:macos-app` passed, producing universal backend/shell binaries with the latest WebUI and verifying signatures, DMG integrity and mounted contents. Earlier runs reproduced missing-toolchain-library preflight failure while preserving previous outputs. Browser regressions covered distinct network/invalid-token errors, focus restoration after failure and retry with the same token. Desktop/mobile captures confirmed the protocol designer first in the system group and the removal of its title description. macOS 12/Intel hardware, logout/login, notification permissions, VoiceOver and a complete released-version update/restart still require the matrix above.
 
 ## Keyboard and logs
 

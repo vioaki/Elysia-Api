@@ -9,7 +9,6 @@ Deployment, protocols, APIs, and development for Elysia API. Start with [quick s
 | Document | Contents |
 | --- | --- |
 | [Deployment](deployment.en.md) | Binaries, macOS app, Docker, configuration, logs, upgrades, and recovery |
-| [macOS validation](macos-testing.en.md) | Native toolchain, automated checks, and device acceptance |
 
 ## Protocols and integration
 
@@ -34,22 +33,11 @@ Deployment, protocols, APIs, and development for Elysia API. Start with [quick s
 | Document | Contents |
 | --- | --- |
 | [Development](development.en.md) | Environment, local development, tests, cross-compilation, and release artifacts |
-| [WebUI development](../packages/webui/README.en.md) | Frontend commands, proxies, and builds |
-| [Frontend specification](webui-frontend-spec.en.md) | Existing visual design, layout, states, and accessibility |
-| [Acceptance checklist](webui-acceptance.en.md) | Runtime, models, permissions, logs, and release checks |
+| [WebUI development](../packages/webui/README.en.md) | Frontend commands, proxies, builds, and interaction conventions |
+| [macOS validation](macos-testing.en.md) | Native toolchain, automated checks, and device acceptance |
 | [Login assets](../scripts/login-trace/README.en.md) | Extraction, review, asset validation, and performance reproduction |
 
-## History and proposals
-
-These retain their original language and context. They are not current feature contracts and are not maintained as bilingual pairs.
-
-| Material | Status |
-| --- | --- |
-| [Changelog](../CHANGELOG.md) | Historical changes by release |
-| [2026-06 code review](archive/code-review-2026-06.md) | Review findings and repair records from that period |
-| [Responses Tools DLC](responses-tools-dlc-blueprint.md) | Unimplemented design proposal |
-| [Logo design](../logo-design-doc.md) | Early visual design notes |
-| [Login trace review](../scripts/login-trace/review-log.md) | Asset review history and its acceptance limits |
+See the [changelog](../CHANGELOG.md) for changes by release.
 
 ## Conventions
 

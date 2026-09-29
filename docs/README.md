@@ -9,7 +9,6 @@ Elysia API 的部署、协议、接口和开发参考。首次使用从[快速�
 | 文档 | 内容 |
 | --- | --- |
 | [部署指南](deployment.md) | 二进制、macOS App、Docker、配置、日志、升级与恢复 |
-| [macOS 验证](macos-testing.md) | 原生工具链、自动检查与真机验收 |
 
 ## 协议与接入
 
@@ -34,22 +33,11 @@ Elysia API 的部署、协议、接口和开发参考。首次使用从[快速�
 | 文档 | 内容 |
 | --- | --- |
 | [开发指南](development.md) | 环境、本地开发、测试、交叉编译与发布产物 |
-| [WebUI 开发](../packages/webui/README.md) | 前端命令、代理与构建 |
-| [前端规范](webui-frontend-spec.md) | 现有界面设计、布局、状态和可访问性约定 |
-| [验收清单](webui-acceptance.md) | 运行、模型、权限、日志与发行检查 |
+| [WebUI 开发](../packages/webui/README.md) | 前端命令、代理、构建与交互约定 |
+| [macOS 验证](macos-testing.md) | 原生工具链、自动检查与真机验收 |
 | [登录素材制作](../scripts/login-trace/README.md) | 提取、审图、资产校验与性能复现 |
 
-## 历史与提案
-
-以下保留原始记录，不作为当前功能契约，也不要求双语同步。
-
-| 资料 | 性质 |
-| --- | --- |
-| [更新日志](../CHANGELOG.md) | 各发布版本的历史变更 |
-| [2026-06 代码审查](archive/code-review-2026-06.md) | 当时的审查结果及修复记录 |
-| [Responses Tools DLC](responses-tools-dlc-blueprint.md) | 未实现的设计蓝图 |
-| [Logo 设计说明](../logo-design-doc.md) | 早期视觉设计记录 |
-| [登录轨迹审查](../scripts/login-trace/review-log.md) | 素材审查过程与当时的验收边界 |
+各发布版本的变更见[更新日志](../CHANGELOG.md)。
 
 ## 阅读约定
 
