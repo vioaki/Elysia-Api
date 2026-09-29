@@ -57,7 +57,7 @@ Partial update example:
 }
 ```
 
-Writable fields: `host`, `port`, `logLevel`, `httpTimeout`, `panelAccessToken`, `databasePath`, `enablePprof`, `outbound.deniedIpRanges`, `usageLog`, `modelCatalog.syncIntervalMinutes`, and `agentRemote`.
+Writable fields: `host`, `port`, `logLevel`, `httpTimeout`, `panelAccessToken`, `databasePath`, `enablePprof`, `outbound.deniedIpRanges`, `usageLog`, `systemLog`, `modelCatalog.syncIntervalMinutes`, and `agentRemote`.
 
 Omitted fields remain unchanged. `usageLog` merges individual fields and accepts explicit `0`. `outbound` replaces the whole deny list; an empty list permits all ranges. `agentRemote.publicUrl: ""` clears the public address. `webuiDir`, `secretKeyPath`, and `maxBodyBytes` are not writable through this endpoint.
 
@@ -169,7 +169,7 @@ Use RFC3339 timestamps and the range `[from, to)`. Repeat `keyName`, `groupName`
 
 `pulse.points[].t` is Unix milliseconds. P95 is exact up to 16384 samples, then reservoir-sampled; window P95 is not a mean of bucket P95s. The other-model row in `by-model-daily` uses `isOther: true` and an empty `model`; clients choose its display label.
 
-`POST /api/admin/usage/cleanup` starts asynchronous retention cleanup and returns `{accepted}`, with `false` when a pass is already running. `POST /api/admin/usage/reset` deletes usage and externalized media and is destructive. See [deployment](deployment.en.md#request-log-management) for capture and retention policies.
+`POST /api/admin/usage/cleanup` queues retention and physical space reclamation. `GET /api/admin/usage/maintenance` reports progress, blocking readers and failures. `POST /api/admin/usage/reset` synchronously clears request logs, aggregates and attachment references, returning `{reset, reclaimQueued}`; attachment files and database space are reclaimed in the background. See [deployment](deployment.en.md#request-logs) for capture and retention policies.
 
 <a id="protocol-agent-ai-assistant"></a>
 

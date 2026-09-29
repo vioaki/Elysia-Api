@@ -183,7 +183,7 @@ docker compose logs elysia-api
   "usageLog": {
     "persistEnabled": true,
     "retentionDays": 0,
-    "maxStorageMB": 0,
+    "maxContentMB": 0,
     "maxRecords": 0,
     "bodyMaxKB": 0,
     "bodyOnErrorOnly": false,
@@ -197,13 +197,15 @@ docker compose logs elysia-api
 | --- | --- |
 | `persistEnabled` | 默认 `true`；`false` 停止请求日志持久化 |
 | `retentionDays` / `maxRecords` | 按天数或记录数清理，`0` 不限制 |
-| `maxStorageMB` | 按 SQLite 逻辑大小限制，`0` 不限制；超限删除最旧日志，限频 VACUUM 回收空间 |
+| `maxContentMB` | 按请求日志 JSON 与去重媒体内容大小限制，`0` 不限制；数据库空闲页独立回收 |
 | `bodyMaxKB` | 四段链路正文分别应用的 KB 上限；`0` 不保存正文 |
 | `bodyOnErrorOnly` | 仅失败请求保存正文，仍需 `bodyMaxKB > 0` |
-| `externalizeMedia` | 将正文内 base64 媒体写至数据库目录下的 `usage-assets/<requestId>/`，正文保存占位符 |
+| `externalizeMedia` | 将正文内 base64 媒体去重写至数据库目录下的 `usage-assets/`，正文保存占位符 |
 | `cleanupIntervalMinutes` | 默认 60 分钟，正值最低 5 分钟 |
 
-策略作用于后续请求，不追溯删除旧正文。留存清理保留小时聚合统计；外置媒体随日志删除。现有显式限制在升级时保留。旧 `usagePersistEnabled`、`usagePersistMaxRecords` 仅在新块未配置对应字段时回退使用。
+策略作用于后续请求，不追溯删除旧正文。留存清理保留小时聚合统计；外置媒体随日志删除。现有显式限制在升级时保留。旧键只在一次性迁移时读取，迁移后不再运行时兼容。
+
+`systemLog.retentionDays`、`systemLog.maxRecords` 和 `systemLog.maxContentMB` 分别限制系统日志的时间、条数及内容字节数，默认均为 `0`（不限）。请求日志预算不包含系统日志、用量汇总、模型配置或 Agent 会话。内容预算不是 SQLite 文件的磁盘硬上限，索引、空闲页和 WAL 单独显示。首次升级会在数据目录保留数据库与配置的 `.pre-log-lifecycle` 备份，不会自动删除；留存清理保留历史用量汇总，只有“重置用量”清除汇总。
 
 <a id="process-supervision"></a>
 

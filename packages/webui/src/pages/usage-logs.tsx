@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Download, RotateCcw, ScrollText, Zap } from 'lucide-react'
+import { LogMaintenanceStatus } from '@/components/log-maintenance-status'
 import { PageHeader } from '@/components/page-header'
 import { RoleWatermark } from '@/components/role-watermark'
 import { Button } from '@/components/ui/button'
@@ -14,7 +15,7 @@ import { AsyncState } from '@/components/ui/states'
 import { UsageFilterBar } from '@/components/usage-filter-bar'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { useToast } from '@/components/ui/use-toast'
-import { useUsageLogs, revalidate, useDebouncedValue } from '@/lib/hooks'
+import { useUsageLogs, revalidate, useDebouncedValue, useLogMaintenance } from '@/lib/hooks'
 import { useUsageFilters } from '@/lib/usage-filters'
 import { api } from '@/lib/api'
 import { downloadJSON, formatDateTime, formatDuration, formatNumber, isSuccessStatus } from '@/lib/utils'
@@ -25,6 +26,7 @@ type StatusView = 'all' | 'ok' | 'fail'
 
 export function UsageLogsPage() {
   const toast = useToast()
+  const { data: maintenance, error: maintenanceError, mutate: refreshMaintenance } = useLogMaintenance()
   const { confirm, dialog } = useConfirm()
   const location = useLocation()
   const navigate = useNavigate()
@@ -103,9 +105,10 @@ export function UsageLogsPage() {
     })
     if (!okToReset) return
     try {
-      await api.usageReset()
-      await Promise.all([mutate(), revalidate.usage()])
-      toast.success('Usage 已重置')
+      const result = await api.usageReset()
+      await Promise.all([mutate(), revalidate.usage(), refreshMaintenance()])
+      if (result.reclaimQueued) toast.success('用量数据已重置', '空间回收已提交，进度见下方')
+      else toast.error('用量数据已重置，空间回收未提交', '请稍后在设置页触发立即清理')
       setPage(0)
     } catch (err) {
       toast.error('重置失败', (err as Error).message)
@@ -194,7 +197,8 @@ export function UsageLogsPage() {
           />
         </UsageFilterBar>
 
-        <AsyncState
+        <LogMaintenanceStatus status={maintenance} error={maintenanceError} />
+      <AsyncState
           isLoading={isLoading}
           error={error}
           data={data?.items}

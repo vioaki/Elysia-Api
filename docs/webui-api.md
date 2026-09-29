@@ -64,7 +64,7 @@ Authorization: Bearer <PANEL_TOKEN>
 }
 ```
 
-可更新字段：`host`、`port`、`logLevel`、`httpTimeout`、`panelAccessToken`、`databasePath`、`enablePprof`、`outbound.deniedIpRanges`、`usageLog`、`modelCatalog.syncIntervalMinutes`、`agentRemote`。
+可更新字段：`host`、`port`、`logLevel`、`httpTimeout`、`panelAccessToken`、`databasePath`、`enablePprof`、`outbound.deniedIpRanges`、`usageLog`、`systemLog`、`modelCatalog.syncIntervalMinutes`、`agentRemote`。
 
 省略字段保持原值。`usageLog` 支持逐字段更新，`0` 是有效值；`outbound` 替换整个禁止段列表，空列表全部放行。`agentRemote.publicUrl: ""` 清空对外地址。`webuiDir`、`secretKeyPath`、`maxBodyBytes` 不在此更新接口中。
 
@@ -190,11 +190,11 @@ Authorization: Bearer <PANEL_TOKEN>
 | `/logs/:id` | 存储的请求详情，正文是否存在由捕获策略决定 |
 | `/seq` | 用量序列，用于刷新检测 |
 | `/assets/:requestId/:file` | 受管理鉴权保护的媒体；文件名为 `<16-hex>.<ext>` |
-| `/storage` | `db`、`recordCount`、`assets`、生效 `config`、`lastCleanup` |
+| `/storage` | 数据库文件/WAL/空闲页、请求/系统日志内容、媒体/汇总/索引占用与维护状态 |
 
 `pulse.points[].t` 为 Unix 毫秒；P95 在最多 16384 个样本时精确，超出后使用蓄水池估算；窗口 P95 不是各桶 P95 均值。`by-model-daily` 的其他模型行使用 `isOther: true` 与空 `model`，由客户端显示名称。
 
-`POST /api/admin/usage/cleanup` 异步触发一次留存清理，返回 `{accepted}`，已有清理任务时为 `false`。`POST /api/admin/usage/reset` 清除用量并删除外置媒体，属于破坏性操作。正文捕获及留存说明见[部署指南](deployment.md#request-log-management)。
+`POST /api/admin/usage/cleanup` 触发日志留存和空间回收任务，返回排队结果。`GET /api/admin/usage/maintenance` 返回阶段、阻塞及失败状态。`POST /api/admin/usage/reset` 同步清除请求日志、汇总和附件引用，返回 `{reset, reclaimQueued}`；附件文件删除和数据库空间回收在后台进行。正文捕获及留存说明见[部署指南](deployment.md#请求日志)。
 
 <a id="protocol-agent-ai-assistant"></a>
 

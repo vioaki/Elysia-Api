@@ -175,7 +175,7 @@ By default, logs contain metadata and usage, without request/response bodies, in
   "usageLog": {
     "persistEnabled": true,
     "retentionDays": 0,
-    "maxStorageMB": 0,
+    "maxContentMB": 0,
     "maxRecords": 0,
     "bodyMaxKB": 0,
     "bodyOnErrorOnly": false,
@@ -189,13 +189,15 @@ By default, logs contain metadata and usage, without request/response bodies, in
 | --- | --- |
 | `persistEnabled` | Defaults to `true`; `false` stops request-log persistence |
 | `retentionDays` / `maxRecords` | Age or record-count cleanup; `0` means unlimited |
-| `maxStorageMB` | SQLite logical-size limit; `0` is unlimited; delete oldest logs and use rate-limited VACUUM to reclaim space |
+| `maxContentMB` | request-log JSON plus deduplicated media content budget; `0` is unlimited; database pages are reclaimed independently |
 | `bodyMaxKB` | KB limit for each of the four request-chain bodies; `0` disables body capture |
 | `bodyOnErrorOnly` | Keep bodies only for failed requests; still requires `bodyMaxKB > 0` |
-| `externalizeMedia` | Store base64 media under `usage-assets/<requestId>/` beside the database and retain placeholders in bodies |
+| `externalizeMedia` | Deduplicate base64 media under `usage-assets/` beside the database and retain placeholders in bodies |
 | `cleanupIntervalMinutes` | Defaults to 60 minutes; positive values have a minimum of 5 |
 
-Policies affect subsequent requests; old bodies are not retroactively removed. Retention cleanup preserves hourly aggregate statistics and deletes associated media. Explicit existing limits survive upgrades. Legacy `usagePersistEnabled` and `usagePersistMaxRecords` apply only when their new block fields are absent.
+Policies affect subsequent requests; old bodies are not retroactively removed. Retention cleanup preserves hourly aggregate statistics and deletes associated media. Explicit existing limits survive upgrades. Legacy keys are read only by the one-time migration and are not used at runtime.
+
+`systemLog.retentionDays`, `systemLog.maxRecords`, and `systemLog.maxContentMB` independently limit system-log age, count, and content bytes; all default to `0` (unlimited). The request-log budget excludes system logs, usage aggregates, model configuration, and Agent sessions. A content budget is not a hard disk limit for the SQLite file: indexes, free pages, and WAL are reported separately. The first upgrade retains `.pre-log-lifecycle` database and configuration backups in the data directory; they are not deleted automatically. Retention keeps historical usage aggregates, while Reset Usage clears them.
 
 <a id="process-supervision"></a>
 
