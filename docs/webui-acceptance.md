@@ -1,50 +1,66 @@
-# WebUI Acceptance Checklist
+# WebUI 验收清单
+
+[文档首页](README.md) · **简体中文** · [English](webui-acceptance.en.md)
+
+## 前提与执行方式
+
+- 使用临时配置、数据库、密钥和测试令牌，记录版本、系统、浏览器及执行日期。不要重置生产 Usage。
+- 先运行开发指南中的自动检查，再按下列项目验证；复选框是待执行清单，不代表当前版本已经通过。
+- 涉及上游调用时先使用本地模拟服务；真实供应商测试需单独准备凭证并确认用量。
 
 ## 基础运行
 
-- [ ] 不安装任何外部启动器，直接运行后端，WebUI 可以登录并完成全部配置。
-- [ ] 默认 `config.json` 旁边生成 SQLite 数据库与主密钥文件。
-- [ ] 内嵌 WebUI 在 `/ui/` 可访问。
-- [ ] 修改 `logLevel` 与 `httpTimeout` 后可热重载生效。
-- [ ] 修改 `host`、`port`、`databasePath` 或 `enablePprof` 后明确提示需要重启。
+- [ ] 运行发行二进制，访问 `/ui/`，使用 `panelAccessToken` 登录；无需额外启动器。
+- [ ] 首次启动生成配置；默认数据库和主密钥位于配置旁。损坏配置应报错且保留原文件。
+- [ ] 修改 `logLevel`、`httpTimeout` 后验证热重载；修改 `host`、`port`、`databasePath`、`enablePprof` 后验证重启提示。
+- [ ] 普通二进制遇到端口占用时报告错误；macOS App 按其端口回退策略启动。
 
 ## 模型源覆盖
 
-- [ ] OpenAI source 可自动拉取模型。
-- [ ] OpenAI-compatible source 可自动拉取模型。
-- [ ] Claude source 拉取失败时可看到错误提示并写入系统日志。
-- [ ] Gemini source 可自动拉取模型。
-- [ ] 手动 source 可新增多个模型并进入模型缓存。
-- [ ] 禁用 source 后不会参与刷新与选择。
+- [ ] 分别验证 Chat Completions、Responses、Anthropic、Gemini 模型发现及失败提示。兼容服务按其真实模型列表端点验证。
+- [ ] 自动源刷新失败或返回空列表时保留已有模型缓存，并显示失败原因。
+- [ ] 手动源可以登记多个模型；禁用源不参与刷新和路由选择。
+- [ ] 自定义源声明 `models` 时可验证发现；未声明时使用手动模型。
+- [ ] 修改模型能力后，刷新不会覆盖人工设置。
 
 ## 模型组覆盖
 
-- [ ] 可创建 LLM group。
-- [ ] 可配置 round-robin、sequential、random。
-- [ ] 可配置 maxRetries、retryInterval。
-- [ ] 可配置 maxConcurrency、dailyLimitMaxRequests、dailyLimitMaxTokens。
-- [ ] `/v1/models` 和 `/v1beta/models` 能返回启用的 group。
-- [ ] 请求 group name 能转发到组内模型。
+- [ ] 创建 LLM 组，验证 `round-robin`、`sequential`、`random`；区分轮询、失败回退和随机起点。
+- [ ] 配置 `maxRetries`、`retryInterval`、`maxConcurrency`、`dailyLimitMaxRequests`、`dailyLimitMaxTokens` 并验证限制。
+- [ ] `/v1/models` 和 `/v1beta/models` 返回当前令牌可访问的启用组；按组名调用能路由到成员。
+- [ ] 组改名后检查客户端名称及令牌授权；删除最后一个授权组时，相关令牌按规则禁用。
 
-## Token 与安全
+<a id="token-与安全"></a>
 
-- [ ] Relay API Token 可创建、禁用、删除。
-- [ ] 未授权访问 `/api/admin/*` 返回 401。
-- [ ] 未授权访问 `/v1/*` 返回 401。
-- [ ] token 和 API key 不在列表、日志、usage 明文泄漏。
-- [ ] SQLite 敏感字段在配置主密钥后以密文保存。
+## 令牌与权限
 
-## Usage 与日志
+- [ ] 推理令牌可创建、禁用、更新和删除；管理员未认证访问返回 401，推理未认证访问返回 401。
+- [ ] 面板令牌、推理令牌、Agent Key 各自用途分离；Agent Key 不能用于推理，缺少远程作用域返回 403。
+- [ ] 普通列表和系统日志不泄漏密钥；明文 reveal 与 runtime-config 中的面板令牌只对管理员开放。
+- [ ] 主密钥加载成功时检查 SQLite 敏感字段的密文存储；密钥失败时检查告警，不将失败降级视为加密成功。
+- [ ] REST/A2A 验证 ask/always/never 与计划模式；MCP 直接执行不依赖这些审批，单独检查作用域和出站限制。
 
-- [ ] streaming 和 non-streaming 请求都会写入 usage。
-- [ ] usage logs 支持分页和过滤。
-- [ ] usage stats 与日志范围一致。
-- [ ] reset usage 后统计清零。
-- [ ] 系统日志页能显示刷新模型、错误等事件。
+<a id="usage-与日志"></a>
+
+## 用量与日志
+
+- [ ] 流式与非流式请求均记录用量；默认不保存正文。启用正文捕获后验证上限、截断和媒体外置标记。
+- [ ] 日志分页、多选、时间半开区间及状态过滤与统计范围一致；失败、客户端取消和空数据分别显示。
+- [ ] 在测试数据库重置 Usage，验证统计与页码更新；验证保留天数、条数和大小清理条件。
+- [ ] 系统日志显示刷新和错误事件；导出内容与当前记录及捕获策略一致。
+
+## 前端与可访问性
+
+- [ ] 深浅主题、桌面、760/761px 断点及窄屏下，表格、对话框、抽屉和长内容可读且可操作。
+- [ ] 键盘完成登录、导航、筛选和确认；Esc 关闭、焦点恢复、屏幕阅读器标签与减少动态效果可用。
+- [ ] 网络失败与令牌错误有不同提示；素材失败不阻止已经验证的登录。
 
 ## 独立发行
 
-- [ ] `yarn build` 生成 `dist/standalone`。
-- [ ] 仓库根目录保留 `config.json.example`，发行目录不复制配置模板。
-- [ ] Windows、Linux、macOS 二进制均嵌入最新 WebUI。
-- [ ] 发行目录不包含本地 SQLite、WAL、主密钥或运行时 config。
+- [ ] 在仓库根目录执行 `npm run build`，生成 `dist/standalone` 的六个平台/架构二进制。
+- [ ] 根目录保留 `config.json.example`；发行目录不复制模板，也不包含本地 config、SQLite/WAL 或主密钥。
+- [ ] 二进制嵌入最新 WebUI；macOS App / DMG 另按原生验证指南检查，不把 ad-hoc 签名当作公证。
+
+## 故障记录
+
+失败时记录复现步骤、预期/实际结果、脱敏日志和环境；先按[部署故障处理](deployment.md#故障处理)定位，再重跑受影响项。自动检查见[开发指南](development.md)，原生专项见 [macOS 验证](macos-testing.md)。

@@ -1,5 +1,11 @@
 # macOS 原生体验验证
 
+[文档首页](README.md) · **简体中文** · [English](macos-testing.en.md)
+
+本指南用于验证原生壳、更新器和内嵌面板。以下命令均在仓库根目录执行；先按[开发指南](development.md)安装项目依赖。
+
+## 前提
+
 App 运行目标为 macOS 12+。构建机需要与其 macOS 版本兼容的 Command Line Tools（或完整 Xcode）、Node.js 和 Go 1.25+；工具链还必须能够链接 arm64 和 x86_64 的 macOS 12 Swift 程序。原生壳仅使用系统框架，测试使用 Swift、AppKit、WebKit、Python 标准库及由 Clang 生成的架构校验夹具。运行及更新已打包的 App 不需要开发工具。
 
 ## 工具链与双架构构建
@@ -84,6 +90,10 @@ PLAYWRIGHT_CHANNEL=chrome npm run test:e2e --workspace @root/webui
 | 更新 | 无新版本、离线、缺少 DMG、摘要错误、取消下载、只读安装目录、替换失败及成功更新；旧版本或可恢复备份保留，更新后进入总览，窗口、主题、配置、数据库和密钥保留；未安装 CLT 的机器也能完成更新校验。 |
 | WebKit 导出 | 日志导出、取消保存、关闭窗口期间下载，确认导出仍完成或给出明确错误，外部链接交给默认浏览器。 |
 
+## 历史验证记录
+
+以下为 2026-09-14 的环境记录，不代表后续版本或本次文档修改已经重新执行这些测试。
+
 2026-09-14 在 Apple Silicon / macOS 26.6.2 上安装 CLT 26.6 Universal 后，通过 69 项原生集成检查、19 项真实后端面板检查、7 个浏览器回归用例和 WebUI lint。`npm run build` 与 `npm run build:macos-app` 均通过，产出包含最新 WebUI 的双架构后端及原生壳，并完成签名、DMG 完整性和挂载内容校验。此前已复现工具链缺库时的提前失败与旧产物保留。浏览器回归覆盖网络错误与无效令牌的不同提示、失败后焦点恢复及使用同一令牌重试；桌面与手机截图确认协议设计器位于系统分组首位且标题说明已移除。macOS 12/Intel 真机、登录注销、系统通知权限、VoiceOver 和真实发布版本的完整自更新重启需按上表补充验收。
 
 ## 键盘与日志
@@ -103,3 +113,14 @@ PLAYWRIGHT_CHANNEL=chrome npm run test:e2e --workspace @root/webui
 ```sh
 log stream --predicate 'subsystem == "dev.pinkelysiadev.ElysiaApi"' --level info
 ```
+
+## 故障处理
+
+| 现象 | 处理 |
+| --- | --- |
+| Intel 链接缺少 Swift 兼容库 | 运行工具链检查，选择含两种架构库的 CLT/Xcode；保留 macOS 12 部署目标 |
+| `--panel` 找不到应用 | 先执行 `npm run build` 和 `npm run build:macos-app` |
+| 无显示环境的快照不更新 | 使用测试提供的最终布局快照；动画与交互在解锁后的显示环境单独验收 |
+| 更新验证失败 | 查看 OSLog 和运行日志，检查 DMG、摘要、目录权限和恢复备份，不跳过校验 |
+
+部署与数据恢复见[部署指南](deployment.md)。
