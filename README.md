@@ -39,7 +39,6 @@
 
 从 [GitHub Releases](https://github.com/PinkElysiaDev/Elysia-Api/releases/latest) 下载对应平台预编译产物，附 SHA256 校验文件。
 
-<details>
 <summary>平台对应产物</summary>
 
 | 平台                  | 文件名                             |
@@ -47,8 +46,6 @@
 | Windows amd64/arm64 | `elysia-api-windows-{arch}.exe` |
 | Linux amd64/arm64   | `elysia-api-linux-{arch}`       |
 | macOS 通用            | `elysia-api-macos.dmg`          |
-
-</details>
 
 ### 2. 启动
 
