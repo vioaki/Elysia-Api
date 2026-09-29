@@ -4,15 +4,9 @@
 
 从首次启动到升级、备份与故障处理。源码构建见[开发指南](development.md)，首次模型调用见[快速开始](../README.md#快速开始)。
 
-<a id="build"></a>
-<a id="run"></a>
-
 ## 安装与启动
 
 从 [Releases](https://github.com/PinkElysiaDev/Elysia-Api/releases/latest) 下载对应架构产物和 `SHA256SUMS`。Windows / Linux 提供 amd64、arm64；macOS 提供通用 DMG。核对下载文件的 SHA256，再启动程序。
-
-<a id="windows"></a>
-<a id="linux"></a>
 
 ### Windows / Linux
 
@@ -30,9 +24,6 @@ Windows 使用 `.\elysia-api-windows-amd64.exe --config .\config.json`；ARM64 �
 - 默认监听 `127.0.0.1:8765`；普通二进制遇到端口占用直接报错，不自动选择其他端口。
 - 启动后访问 `/ui/`，使用面板令牌登录。首次登录后轮换令牌，保护配置和启动日志。
 - 默认尝试打开浏览器；无桌面环境可设置 `openBrowserOnStart: false`。
-
-<a id="macos"></a>
-<a id="macos-app-bundle"></a>
 
 ### macOS App
 
@@ -114,8 +105,6 @@ docker compose logs elysia-api
 
 使用反向代理提供 TLS 和外部访问；仅为需要访问的网段开放端口。若更改容器内端口，需同时调整映射和镜像内固定 `8765` 的健康检查、关闭探针。
 
-<a id="configuration"></a>
-
 ## 配置
 
 以下为首次启动写入的主要字段；示例令牌必须替换，不要将 `change-me` 用于部署：
@@ -172,8 +161,6 @@ docker compose logs elysia-api
 
 本机或内网模型源需要按实际地址调整出站禁止段。只移除必要的 CIDR；源访问和目录更新的代理配置不是同一设置。完整默认列表见根目录 [config.json.example](../config.json.example)。
 
-<a id="request-log-management"></a>
-
 ## 请求日志
 
 默认记录请求元数据和用量，不保存请求／响应正文，包括失败请求。需要排障正文时，将 `usageLog.bodyMaxKB` 设为正数；WebUI 开关初次启用设置为 1024 KB。自动清理默认关闭。
@@ -207,8 +194,6 @@ docker compose logs elysia-api
 
 `systemLog.retentionDays`、`systemLog.maxRecords` 和 `systemLog.maxContentMB` 分别限制系统日志的时间、条数及内容字节数，默认均为 `0`（不限）。请求日志预算不包含系统日志、用量汇总、模型配置或 Agent 会话。内容预算不是 SQLite 文件的磁盘硬上限，索引、空闲页和 WAL 单独显示。首次升级会在数据目录保留数据库与配置的 `.pre-log-lifecycle` 备份，不会自动删除；留存清理保留历史用量汇总，只有“重置用量”清除汇总。
 
-<a id="process-supervision"></a>
-
 ## 服务托管
 
 普通二进制是长驻进程，可由 systemd、Windows 服务包装器或容器托管。以下 unit 假设已创建系统用户 `elysia`，程序位于 `/opt/elysia-api/`，且该用户可写配置和数据目录：
@@ -232,8 +217,6 @@ WantedBy=multi-user.target
 
 保存为 `/etc/systemd/system/elysia-api.service` 后执行 `sudo systemctl daemon-reload` 和 `sudo systemctl enable --now elysia-api`。用 `journalctl -u elysia-api` 查看启动日志。
 
-<a id="sqlite-and-wal"></a>
-
 ## 升级、备份与恢复
 
 SQLite 使用 WAL、5000 ms busy timeout、外键和 `synchronous=NORMAL`。
@@ -246,21 +229,15 @@ SQLite 使用 WAL、5000 ms busy timeout、外键和 `synchronous=NORMAL`。
 
 在线备份应使用 SQLite 备份工具取得一致数据库，并协调媒体文件快照；不要直接复制仍在写入的数据库主文件。数据库目录不可写或磁盘已满会导致写入失败。
 
-<a id="access-token-reset"></a>
-
 ## 令牌恢复
 
 面板令牌丢失时，停止服务，修改配置中的 `panelAccessToken` 为新的随机值，再启动并重新登录。推理令牌存于 SQLite，恢复面板访问后通过管理页修改。
 
-<a id="runtime-changes"></a>
-
 ## 热重载
 
-`POST /api/admin/reload` 要求面板鉴权；运行配置更新接口见 [API 参考](webui-api.md#runtime-config)。监听地址、端口、数据库路径和 pprof 路由变化需要重启，热重载不会重建这些资源。
+`POST /api/admin/reload` 要求面板鉴权；运行配置更新接口见 [API 参考](webui-api.md#运行配置)。监听地址、端口、数据库路径和 pprof 路由变化需要重启，热重载不会重建这些资源。
 
 `POST /__reload`、`POST /__shutdown` 只允许回环来源；代理转发时不要将这两个端点公开。
-
-<a id="migration-notes"></a>
 
 ## 旧版本迁移
 

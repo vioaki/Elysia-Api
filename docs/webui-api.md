@@ -4,8 +4,6 @@
 
 WebUI 使用 `/api/admin` 管理网关。路由定义见 [admin.go](../backend/server/admin.go)，数据语义见[数据模型](webui-data-model.md)。本文中的路径均相对于运行中的网关。
 
-<a id="authentication"></a>
-
 ## 鉴权
 
 请求使用面板令牌：
@@ -15,8 +13,6 @@ Authorization: Bearer <PANEL_TOKEN>
 ```
 
 面板令牌来自 `config.json`。浏览器还可通过 `panel_access_token` Cookie 认证。推理令牌与 Agent Key 不代替面板令牌。请求通常使用 `Content-Type: application/json`。
-
-<a id="response-envelope"></a>
 
 ## 响应
 
@@ -34,16 +30,9 @@ Authorization: Bearer <PANEL_TOKEN>
 
 常见失败：400 参数校验失败；401 面板令牌无效；404 对象不存在；409 冲突或任务进行中；503 `store_unavailable`。`error.code` 还包括 `save_source_failed`、`save_group_failed`、`save_token_failed`、`usage_log_not_found` 等操作相关错误。
 
-<a id="bootstrap-configjson"></a>
-
 ## 启动配置
 
-配置字段、环境变量及数据路径见[部署指南](deployment.md#configuration)。模型源和令牌使用 SQLite；当前配置解析不导入旧 `tokens`、`modelGroups` 或 `dashboardToken` 字段。
-
-<a id="runtime-config"></a>
-
-<a id="get-apiadminruntime-config"></a>
-<a id="put-apiadminruntime-config"></a>
+配置字段、环境变量及数据路径见[部署指南](deployment.md#配置)。模型源和令牌使用 SQLite；当前配置解析不导入旧 `tokens`、`modelGroups` 或 `dashboardToken` 字段。
 
 ## 运行配置
 
@@ -69,8 +58,6 @@ Authorization: Bearer <PANEL_TOKEN>
 省略字段保持原值。`usageLog` 支持逐字段更新，`0` 是有效值；`outbound` 替换整个禁止段列表，空列表全部放行。`agentRemote.publicUrl: ""` 清空对外地址。`webuiDir`、`secretKeyPath`、`maxBodyBytes` 不在此更新接口中。
 
 监听地址、端口、数据库路径和 pprof 变更要求重启；HTTP 超时、日志正文策略等可对后续请求生效。`bodyMaxKB` 默认 0，保存正文需显式开启；清理参数在后台下一轮巡检读取。不要记录或公开运行配置响应中的令牌。
-
-<a id="model-sources"></a>
 
 ## 模型源
 
@@ -105,9 +92,6 @@ Authorization: Bearer <PANEL_TOKEN>
 
 `apiKeys` 支持多 Key 与逐 Key 模型权限，`keyStrategy` 支持 `single`、`round-robin`、`random`、`priority`。拉取接口返回不代表任务完成；轮询源的 `refreshState`。拉取期间部分写操作返回冲突。刷新保留手工模型和用户编辑的能力字段。
 
-<a id="models"></a>
-<a id="get-apiadminmodels"></a>
-
 ## 模型
 
 | 方法 | 路径 | 行为 |
@@ -117,8 +101,6 @@ Authorization: Bearer <PANEL_TOKEN>
 | DELETE | `/api/admin/models/:sourceId?modelId=` | 删除模型并清理组引用 |
 
 模型 ID 可能包含 `/`，因此必须放在 URL 编码后的 `modelId` 查询参数中。以 `(sourceId, id)` 区分不同源的同名模型。
-
-<a id="model-groups"></a>
 
 ## 模型组
 
@@ -148,8 +130,6 @@ Authorization: Bearer <PANEL_TOKEN>
 
 策略：`round-robin`、`sequential`、`random`；`retryInterval` 单位为毫秒；并发和日限额为 `0` 时不限。删除组可能级联禁用仅获该组授权的令牌，返回 `disabledTokens`，避免空授权列表意外扩大权限。
 
-<a id="api-tokens"></a>
-
 ## 访问令牌
 
 ```json
@@ -163,17 +143,6 @@ Authorization: Bearer <PANEL_TOKEN>
 | GET | `/api/admin/api-tokens/:name/reveal` | 按需读取明文 `{name, token}` |
 
 创建要求非空 token；更新时 token 为空保留原密钥，省略 `allowedGroups` / `scopes` 保留原值，显式空数组清空。改名通过 `newName`；改名失败不回滚此前已保存的属性。普通令牌的空 `allowedGroups` 表示不限制模型组。带 `agent` 作用域的 Key 用于远程运维，被推理端点拒绝。
-
-<a id="usage"></a>
-<a id="get-apiadminusagestats"></a>
-<a id="get-apiadminusagepulse"></a>
-<a id="get-apiadminusageby-model-daily"></a>
-<a id="get-apiadminusagelogs"></a>
-<a id="get-apiadminusagelogsid"></a>
-<a id="post-apiadminusagereset"></a>
-<a id="get-apiadminusageassetsrequestidfile"></a>
-<a id="get-apiadminusagestorage"></a>
-<a id="post-apiadminusagecleanup"></a>
 
 ## 用量
 
@@ -196,17 +165,6 @@ Authorization: Bearer <PANEL_TOKEN>
 
 `POST /api/admin/usage/cleanup` 触发日志留存和空间回收任务，返回排队结果。`GET /api/admin/usage/maintenance` 返回阶段、阻塞及失败状态。`POST /api/admin/usage/reset` 同步清除请求日志、汇总和附件引用，返回 `{reset, reclaimQueued}`；附件文件删除和数据库空间回收在后台进行。正文捕获及留存说明见[部署指南](deployment.md#请求日志)。
 
-<a id="protocol-agent-ai-assistant"></a>
-
-<a id="get-apiadminagentsessions"></a>
-<a id="post-apiadminagentsessions"></a>
-<a id="get-apiadminagentsessionsid"></a>
-<a id="patch-apiadminagentsessionsid"></a>
-<a id="delete-apiadminagentsessionsid--delete-apiadminagentsessionsidmessagesafterseq0"></a>
-<a id="post-apiadminagentsessionsidmessages"></a>
-<a id="post-apiadminagentsessionsidapprove"></a>
-<a id="post-apiadminagentsessionsidstop"></a>
-
 ## 协议与助手
 
 | 方法 | 路径 | 行为 |
@@ -221,8 +179,6 @@ Authorization: Bearer <PANEL_TOKEN>
 请求结构见[协议定义](protocol-definition-reference.md)及前端类型 `CustomProtocolPreviewResult`、`CustomProtocolTestResult`。
 
 `/api/admin/agent/*` 与[远程 REST](remote-agent-api.md#rest)共用会话 handler，但使用面板令牌。创建／编辑会话、消息、审批、停止、截断和草稿恢复均见该文档。助手通过 `elysia_cli` 执行运维，另有 `ask_user`、`update_plan`；模型调用计入用量，`relayMode=agent-assist`。凭证在会话视图中脱敏，测试凭证的复用限协议测试相关命令。
-
-<a id="logs-and-health"></a>
 
 ## 系统日志与健康
 

@@ -4,8 +4,6 @@
 
 Maheshvara 是网关的内部请求、响应和流事件模型。它用于跨协议转换，不是独立 HTTP API。当前 `MaheshvaraProtocolVersion` 为 `"2"`，对应推理信封版本；v1 信封保留读取兼容。
 
-<a id="1-设计原则"></a>
-
 ## 转换路径
 
 跨协议和自定义协议通过统一模型转换：
@@ -18,8 +16,6 @@ upstream wire → Maheshvara → client wire
 支持 OpenAI Chat Completions、OpenAI Responses、Anthropic Messages、Gemini GenerateContent。同协议满足条件时自动透传，不应将上述转换图理解为每条请求都重写协议。
 
 转换原则：保留目标协议可表达的数据；无法表达的语义明确报错或按已定义规则过滤；不将未知块、签名和密文伪装为普通提示词。自定义协议仅执行受限数据映射。
-
-<a id="2-请求模型"></a>
 
 ## 请求模型
 
@@ -47,8 +43,6 @@ upstream wire → Maheshvara → client wire
 }
 ```
 
-<a id="21-生成参数"></a>
-
 ### 生成参数
 
 | 类别 | 字段 |
@@ -63,9 +57,6 @@ upstream wire → Maheshvara → client wire
 | 缓存与跟踪 | `prompt_cache_key`、`prompt_cache_retention`、`request_id`、`session_id`、`timeout_ms` |
 
 稳定字段之外的扩展进入 `RawExtra`，供兼容和模板使用；不保证每个目标协议都重新发出这些字段。
-
-<a id="22-消息"></a>
-<a id="23-内容-part"></a>
 
 ### 消息与内容
 
@@ -85,8 +76,6 @@ upstream wire → Maheshvara → client wire
 
 多模态数据也可能保留通用 `uri` / `data`；渲染器选择目标可表达的形态。
 
-<a id="24-工具"></a>
-
 ### 工具
 
 函数定义包含 `type: "function"`、`name`、`description`、`parameters` / `input_schema`、`strict`。调用使用 `id`、`type`、`name`、`arguments` / `arguments_text`；`thought_signature` 与来源字段成对保存。
@@ -94,9 +83,6 @@ upstream wire → Maheshvara → client wire
 工具结果通过 `tool_call_id` 关联调用。Gemini 的 `functionResponse` 需要名称，无法从历史关联恢复时返回带消息索引和调用 ID 的转换错误。
 
 Responses 内建工具（例如搜索、文件、代码执行、图像生成）带有执行语义；目标协议无法表达时明确报错，不自动伪装为函数工具。
-
-<a id="3-响应模型"></a>
-<a id="31-usage"></a>
 
 ## 响应模型
 
@@ -121,8 +107,6 @@ Responses 内建工具（例如搜索、文件、代码执行、图像生成）�
 
 用量除输入、输出、总 token 外，还记录缓存命中/创建、推理、文本/图像/音频、工具使用、预测接受/拒绝、内建工具调用数，以及 `estimated`、来源、供应商原始用量。未提供统计的字段不等于精确的零消耗。
 
-<a id="4-reasoning-安全约定"></a>
-
 ## 推理与签名
 
 区分可见推理文本、供应商签名和不可解释的加密／redacted 内容。签名恢复按来源匹配，不能把 Anthropic 签名直接充当 Gemini `thoughtSignature`。
@@ -133,15 +117,11 @@ Chat 扩展 `tool_calls[*].extra_content.google.thought_signature` 被标为 Gem
 
 实现与回归见 [reasoning.go](../backend/relay/maheshvara_reasoning.go)、[v2 测试](../backend/relay/maheshvara_reasoning_v2_test.go)。
 
-<a id="5-gemini-part-不变量"></a>
-
 ## Gemini Part 约束
 
 每个 Part 必须包含一个有效数据表示：非空 `text`、`inlineData`、`fileData`、`functionCall` 或 `functionResponse`。`thought` 是文本 Part 的属性，不是独立内容。
 
 过滤后无 Part 的消息被丢弃，相邻同角色消息可按序合并。转换器不使用空文本占位；没有任何可表达内容时返回本地错误。
-
-<a id="6-四协议请求映射"></a>
 
 ## 请求映射
 
@@ -159,8 +139,6 @@ Chat 扩展 `tool_calls[*].extra_content.google.thought_signature` 被标为 Gem
 
 Chat 扩展可识别 `reasoning_content`、`reasoning_effort`、`repetition_penalty`、`min_p`、`top_a`、媒体和 usage details；识别字段进入内部模型，其他扩展进入 `RawExtra`。
 
-<a id="7-四协议响应映射"></a>
-
 ## 响应映射
 
 | 内部输出 | Chat Completions | Anthropic | Gemini | Responses |
@@ -173,23 +151,11 @@ Chat 扩展可识别 `reasoning_content`、`reasoning_effort`、`repetition_pena
 
 表格描述映射类别，不保证任意私有字段都能跨协议保留。
 
-<a id="8-流式协议"></a>
-<a id="81-sse-reader"></a>
-<a id="82-terminal-契约"></a>
-
 ## 流式
 
 SSE / NDJSON → 状态化 decoder → `MaheshvaraStreamEvent` → 客户端 renderer。SSE reader 支持多行 `data`、`event` / `id` / `retry`、EOF 前未以空行结束的事件、取消、空闲超时和单行 NDJSON。
 
 renderer 维护工具调用状态、Anthropic block 起止、Responses 顺序及 Gemini Part 合法性。`[DONE]` 只由需要它的目标生成。自定义流需可识别终止条件；有 finish reason 的空补全可成功，仅结束标记而无可表达输出的流失败。字段族模式、异构帧和工具拼装见[流式定义](protocol-definition-reference.md#流式映射)。
-
-<a id="9-自定义协议"></a>
-<a id="90-字段级映射模型推荐"></a>
-<a id="ai-harness"></a>
-<a id="91-request-模板"></a>
-<a id="92-auth"></a>
-<a id="93-response-路径"></a>
-<a id="94-stream-mapping"></a>
 
 ## 自定义协议
 
@@ -197,16 +163,11 @@ renderer 维护工具调用状态、Anthropic block 起止、Responses 顺序及
 
 请求树、响应树、模板、auth、transform、aliases 和字段目录统一见[定义参考](protocol-definition-reference.md)。这些内容在该页维护，避免多份参数表冲突。
 
-<a id="10-passthrough"></a>
-
 ## 同协议透传
 
 客户端与选中上游协议一致、且请求未因能力过滤改写时，聊天转发可自动使用透传；Responses 也有对应透传路径。没有需要手工开启的 `relay.passthrough` 配置项。
 
 透传基于原 JSON 重建，只按路由修改模型名，并在需要时补流式标记及 OpenAI usage 选项。它保留未知字段，不意味着字节完全相同或零开销。跨协议、自定义映射及需要过滤的请求使用转换路径。
-
-<a id="11-可表达性与错误策略"></a>
-<a id="12-实现位置与验证"></a>
 
 ## 错误与验证
 

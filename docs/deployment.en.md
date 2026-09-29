@@ -4,9 +4,6 @@
 
 Installation, upgrades, backups, and troubleshooting. See [development](development.en.md) for source builds and [quick start](../README.en.md#quick-start) for the first model request.
 
-<a id="build"></a>
-<a id="run"></a>
-
 ## Installation and startup
 
 Download the matching artifact and `SHA256SUMS` from [Releases](https://github.com/PinkElysiaDev/Elysia-Api/releases/latest). Windows / Linux provide amd64 and arm64 binaries; macOS provides a universal DMG. Verify the downloaded file's SHA256 before launching it.
@@ -164,8 +161,6 @@ Key lookup order: environment variable → `secretKeyPath` → legacy `.db-key` 
 
 Local or private upstreams require an appropriate outbound-policy adjustment. Remove only the necessary CIDRs. Upstream access and model-catalog proxy settings are separate. See [config.json.example](../config.json.example) for the default deny list.
 
-<a id="request-log-management"></a>
-
 ## Request logs
 
 By default, logs contain metadata and usage, without request/response bodies, including for failed requests. Set `usageLog.bodyMaxKB` to a positive value to capture bodies; the WebUI initially enables it at 1024 KB. Automatic cleanup is disabled by default.
@@ -199,8 +194,6 @@ Policies affect subsequent requests; old bodies are not retroactively removed. R
 
 `systemLog.retentionDays`, `systemLog.maxRecords`, and `systemLog.maxContentMB` independently limit system-log age, count, and content bytes; all default to `0` (unlimited). The request-log budget excludes system logs, usage aggregates, model configuration, and Agent sessions. A content budget is not a hard disk limit for the SQLite file: indexes, free pages, and WAL are reported separately. The first upgrade retains `.pre-log-lifecycle` database and configuration backups in the data directory; they are not deleted automatically. Retention keeps historical usage aggregates, while Reset Usage clears them.
 
-<a id="process-supervision"></a>
-
 ## Process supervision
 
 Standalone binaries are long-running processes. Use systemd, a Windows service wrapper, or a container. This unit assumes a system user named `elysia`, a binary under `/opt/elysia-api/`, and writable configuration and data directories for that user:
@@ -224,8 +217,6 @@ WantedBy=multi-user.target
 
 Save it as `/etc/systemd/system/elysia-api.service`, then run `sudo systemctl daemon-reload` and `sudo systemctl enable --now elysia-api`. Inspect startup logs with `journalctl -u elysia-api`.
 
-<a id="sqlite-and-wal"></a>
-
 ## Upgrades, backup, and restore
 
 SQLite uses WAL, a 5000 ms busy timeout, foreign keys, and `synchronous=NORMAL`.
@@ -238,21 +229,15 @@ SQLite uses WAL, a 5000 ms busy timeout, foreign keys, and `synchronous=NORMAL`.
 
 For online backups, use SQLite backup tooling to obtain a consistent database and coordinate the media snapshot. Do not copy only the main file while it is being written. An unwritable data directory or full disk causes writes to fail.
 
-<a id="access-token-reset"></a>
-
 ## Token recovery
 
 If the panel token is lost, stop the service, set `panelAccessToken` to a new random value, restart, and sign in again. Relay tokens reside in SQLite; change them through the panel after restoring access.
-
-<a id="runtime-changes"></a>
 
 ## Reloading
 
 `POST /api/admin/reload` requires panel authentication. See the [API reference](webui-api.en.md#runtime-config) for runtime updates. Listener address, port, database path, and pprof route changes require a restart; reloading does not recreate these resources.
 
 `POST /__reload` and `POST /__shutdown` accept only loopback callers. Do not expose them through a reverse proxy.
-
-<a id="migration-notes"></a>
 
 ## Legacy migration
 

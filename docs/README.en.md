@@ -16,7 +16,6 @@ Deployment, protocols, APIs, and development for Elysia API. Start with [quick s
 | --- | --- |
 | [Maheshvara](maheshvara-protocol.en.md) | Internal model, protocol mappings, streaming, and capability limits |
 | [Custom protocols](protocol-definition-reference.en.md) | JSON definitions, field mappings, conditions, stream frames, and model discovery |
-| [DashScope example](custom-protocol-dashscope.en.md) | OpenAI-compatible access and native protocol configuration |
 
 ## Management APIs
 
@@ -45,4 +44,4 @@ See the [changelog](../CHANGELOG.md) for changes by release.
 - Original paths contain Chinese; `.en.md` contains English. Field names, commands, endpoints, and protocol identifiers remain unchanged.
 - Angle-bracket values such as `<RELAY_TOKEN>` are placeholders. Structures containing ellipses are labeled as illustrative fragments.
 - Panel tokens, relay tokens, and Agent keys serve different purposes. See [authentication](remote-agent-api.en.md#authentication).
-- Resolve discrepancies against routes, types, configuration loaders, and tests. See [documentation maintenance](development.en.md#documentation).
+- Resolve discrepancies against routes, types, configuration loaders, and tests. See [documentation maintenance](development.en.md#documentation-maintenance).

@@ -4,8 +4,6 @@
 
 管理 API 的核心字段与语义。完整类型以[前端 types.ts](../packages/webui/src/lib/types.ts)、[存储类型](../backend/storage/types.go)和 [Agent 类型](../packages/webui/src/lib/agent/types.ts)为核对入口；请求与响应以对应 handler 为准。WebUI 通过 HTTP 管理数据，不直接读写配置文件。
 
-<a id="common-types"></a>
-
 ## 通用类型
 
 ```ts
@@ -24,8 +22,6 @@ type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 `openai`、`openai-compatible`、`claude` 是存量兼容值；新配置使用标准线路标识。`embedding`、`reranker` 等类型字段不等同于已提供对应推理路由，实际端点见 [API](webui-api.md)和[协议说明](maheshvara-protocol.md)。
 
-<a id="runtime-config"></a>
-
 ## 运行配置
 
 | 字段 | 语义 |
@@ -39,9 +35,7 @@ type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 | `modelCatalog` | `enabled`、`url`、`proxy`、`syncIntervalMinutes`；显式周期 0 停止定时同步 |
 | `agentRemote` | `enabled`、`publicUrl` |
 
-更新类型 `RuntimeConfigUpdate` 只允许管理接口支持的字段；并非所有读取字段都可写。响应为 `{updated, restartRequired}`。参数默认值、重启要求见[部署](deployment.md#configuration)。
-
-<a id="model-source"></a>
+更新类型 `RuntimeConfigUpdate` 只允许管理接口支持的字段；并非所有读取字段都可写。响应为 `{updated, restartRequired}`。参数默认值、重启要求见[部署](deployment.md#配置)。
 
 ## 模型源
 
@@ -72,8 +66,6 @@ interface SourceAPIKey {
 
 `allowedModels` 未设置时使用拉取集；两者都未设置时不限制。显式空数组表示该 Key 不服务任何模型。不要把“缺省”和“空数组”合并。
 
-<a id="model-cache"></a>
-
 ## 模型
 
 | 字段组 | 说明 |
@@ -88,8 +80,6 @@ interface SourceAPIKey {
 
 目录未命中时保留可用的手工能力值。模型级能力可用于候选优选；组级能力用于请求约束，不应将两者混为一谈。
 
-<a id="model-group"></a>
-
 ## 模型组
 
 | 字段 | 语义 |
@@ -103,8 +93,6 @@ interface SourceAPIKey {
 
 删除组时，失去全部限定组授权的令牌会被禁用，不能把空列表解释成自动获得所有组权限。
 
-<a id="api-token"></a>
-
 ## 访问令牌
 
 `ApiToken` 包含 `name`、`token`、`enabled`、`allowedGroups`、`scopes`、`createdAt`、`updatedAt`。`newName` 仅用于改名请求。
@@ -113,8 +101,6 @@ interface SourceAPIKey {
 - 普通令牌的空 `allowedGroups` 表示不限制组；明确指定时按组名授权。
 - `scopes` 包含 `agent` 时用于远程运维，不能调用推理接口；模型组授权与此作用域相互独立。
 - 保存后清理表单中的明文。不要把脱敏结果作为新密钥重新提交。
-
-<a id="usage"></a>
 
 ## 用量
 
@@ -145,8 +131,6 @@ interface UsageBody {
 `content` 可能是 JSON 字符串，不保证可解析。捕获关闭时正文为空；媒体外置时包含 `__ELYSIA_ASSET__` 占位符。截断仅描述日志副本，不表示发给客户端的响应被截断。
 
 `UsageQueryParams` 的多选字段 `keyNames`、`groupNames`、`modelNames`、`sourceIds` 经前端序列化为重复的单数查询参数。其余筛选见 [API](webui-api.md#用量)。
-
-<a id="system-logs-and-health"></a>
 
 ## 系统日志与健康
 

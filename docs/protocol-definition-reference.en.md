@@ -197,4 +197,4 @@ Canonical platforms `chat_completions` / `responses` / `anthropic` / `gemini` st
 4. Save the protocol and create a `custom:<id>` source. Enable discovery only when `models` is configured.
 5. Send a client request through a group and compare usage, finish reason, logs, and expected output.
 
-The AI assistant uses the same protocol and CLI tools for drafting, previewing, testing, and saving under session permissions. The old standalone `/custom-protocols/assist` endpoint is no longer provided. See [DashScope](custom-protocol-dashscope.en.md) for an example and [Maheshvara](maheshvara-protocol.en.md) for conversion limits.
+The AI assistant uses the same protocol and CLI tools for drafting, previewing, testing, and saving under session permissions. The old standalone `/custom-protocols/assist` endpoint is no longer provided. See [Maheshvara](maheshvara-protocol.en.md) for conversion limits.

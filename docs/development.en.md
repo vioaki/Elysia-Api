@@ -106,8 +106,6 @@ Outputs are the universal `ElysiaApi.app` and `elysia-api-macos.dmg`. Packaging 
 
 The backend build resolves the latest Git tag and injects it into `/health` through ldflags; without a tag it uses `dev`. The native app has its own version fallback rules in the packaging script. CI builds on `v*` tags or manual dispatch; releases include SHA256 checksums.
 
-<a id="documentation"></a>
-
 ## Documentation maintenance
 
 - Verify source and tests, then update Chinese and the corresponding `.en.md` page with matching interfaces, arguments, defaults, and steps.

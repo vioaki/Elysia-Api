@@ -47,8 +47,6 @@
 | `aliases` | 提取键名覆盖 |
 | `metadata` | 自定义元数据；`preset` 用于预置标识 |
 
-<a id="条件原语-match"></a>
-
 ## 条件 Match
 
 结构为 `path`、`op`、可选 `value`：
@@ -60,8 +58,6 @@
 支持 `nonEmpty`（缺省）、`isEmpty`、`equals`、`notEquals`、`in`、`notIn`、`contains`、`isNull`、`notNull`、`isTrue`、`isFalse`、`gt`、`gte`、`lt`、`lte`。
 
 比较保留类型：数值按数值比较，字符串 `"false"` 不等于布尔值 `false`，对象不受键顺序影响。空白文本、`false`、`0`、空数组/对象、null 和缺失值均视为 `nonEmpty` 的空值；缺失值的 `isFalse` 为真。
-
-<a id="request网关--上游"></a>
 
 ## 请求构造
 
@@ -101,8 +97,6 @@
 
 静态头不能覆盖受 relay 管理的认证/传输头。自定义认证头拒绝 `Host`、`Content-Length`、`Transfer-Encoding`、`Connection`、`Proxy-Authorization` 等传输头；头名、值、插值结果和认证 prefix 拒绝 CR/LF。
 
-<a id="response上游--maheshvara"></a>
-
 ## 响应映射
 
 路径支持点号、数组下标及括号键名，例如 `output[0].content[0].text`、`$['data'][0].text`。
@@ -123,8 +117,6 @@
 兼容写法 `mappings` 提供直接路径别名；`fieldMappings` 每项使用 `target` 与 `source` / 固定 `value` / `default`，支持 `omitIfEmpty`。受控目标包括 `id`、`model`、`created_at`、`status`、`stop_reason`、`incomplete_details`、`metadata`、`service_tier`、`system_fingerprint`、`output`、`usage`、`error`。
 
 转换函数：`identity` / `raw`、`string` / `text` / `join`、`int` / `integer` / `number` / `float` / `timestamp_ms`、`bool` / `boolean`、`json` / `parse_json` / `json_string`、`first`、`usage` / `content_parts` / `tool_calls` / `output_items`。路径、目标和 transform 在注册时校验。
-
-<a id="stream流式映射"></a>
 
 ## 流式映射
 
@@ -155,23 +147,17 @@
 
 累计快照回退或改写时，decoder 可输出当前值；不能承诺所有上游改写都能无损转换。默认终止条件包括非空 finish reason、`status == completed`、终止字面量。显式 finish reason 的空补全可成功；仅 `[DONE]` 且从未输出、也无 finish reason 时失败。终态后约 2 秒空闲排水窗口继续接收 usage 与错误尾帧。
 
-<a id="frames异构帧"></a>
-
 ### 异构帧
 
 每帧至少有 `event` 或 `match`，两者都有时须同时成立；首个命中生效。无事件名的协议使用 Match。未命中规则的帧跳过，需要通用兜底时在末尾配置匹配规则。
 
 帧支持 `payloadPath`、`response`、`terminal`、`tool`、`toolDone`。帧内响应不能再嵌套 `stream`；匹配帧省略响应时使用流级映射。
 
-<a id="frametool分帧工具拼装"></a>
-
 ### 工具调用分帧
 
 `tool` 支持 `path`、`idPath`、`indexPath`、`namePath`、`argumentsPath`、`argumentsMode`。`path` 可指向工具数组，此时其余路径相对数组元素；否则相对原始帧。
 
 身份帧登记 ID、名称及下标；参数帧按 ID 或下标关联。`argumentsMode` 缺省 `delta`，片段原样追加；`cumulative` 按快照差分。身份帧本身不产生参数增量；`toolDone: true` 标记参数完成。支持一帧多个工具及跨帧拼接，不要沿用旧文档中的“不支持”限制。
-
-<a id="aliases提取键名覆盖"></a>
 
 ## 提取别名
 
@@ -187,8 +173,6 @@
 }
 ```
 
-<a id="models模型列表发现"></a>
-
 ## 模型发现
 
 定义 `models` 后，引用此协议的源可开启自动发现；否则使用手工模型。该对象支持 `method`（GET/POST，缺省 GET）、`path`、`headers`、`query`、`auth`、`listPath`、`idPath`（缺省 `id`）、`namePath`。鉴权缺省继承 `request.auth`。
@@ -199,15 +183,11 @@
 {"models":{"method":"GET","path":"/v1/models","listPath":"data","idPath":"id","namePath":"display_name"}}
 ```
 
-<a id="预置协议"></a>
-
 ## 预置与维护
 
 协议表为空时播种 `chat-completions-api`、`responses-api`、`anthropic-api`、`gemini-api`。已有数据库记录优先，升级不覆盖用户修改；清空全部协议后，下次启动会重新播种。旧厂商式预置 ID 的迁移同时更新 `custom:<id>` 引用。
 
 标准平台 `chat_completions` / `responses` / `anthropic` / `gemini` 仍使用内置路径；预置定义用于自定义基底和等价性测试，不意味着所有流量都由 JSON 定义处理。客户端侧 SSE 渲染、传输解析和转换函数仍是 Go 实现。
-
-<a id="边界设计如此非缺陷"></a>
 
 ## 接入与验证
 
@@ -217,4 +197,4 @@
 4. 保存协议，创建 `custom:<id>` 模型源；仅在配置模型发现时开启自动拉取。
 5. 通过模型组发起客户端请求，对照 usage、终止原因、日志和预期输出。
 
-AI 助手使用同一协议与 CLI 工具完成草稿、预览、测试和保存，受会话权限控制。实现不再提供旧文档中的 `/custom-protocols/assist` 独立端点。示例见 [DashScope](custom-protocol-dashscope.md)，转换边界见 [Maheshvara](maheshvara-protocol.md)。
+AI 助手使用同一协议与 CLI 工具完成草稿、预览、测试和保存，受会话权限控制。实现不再提供旧文档中的 `/custom-protocols/assist` 独立端点。转换边界见 [Maheshvara](maheshvara-protocol.md)。

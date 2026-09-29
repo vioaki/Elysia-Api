@@ -11,9 +11,6 @@ REST / A2A 驱动内置助手，使用持久化会话、模型调用和审批。
 | A2A | `POST /a2a` | 任务与 Agent 协作 |
 | Agent Card | `GET /.well-known/agent-card.json` | 公开发现信息，受远程总开关控制 |
 
-<a id="authentication"></a>
-<a id="鉴权与总开关"></a>
-
 ## 鉴权
 
 在运行配置的远程访问区域创建带 `agent` 作用域的 Key：
@@ -31,10 +28,6 @@ Authorization: Bearer <AGENT_KEY>
 无效或未提供远程 Key 返回 401，无 `agent` 作用域返回 403，均提供 `WWW-Authenticate`。Agent Card 本身不要求 Key。模型组授权 `allowedGroups` 与端点作用域 `scopes` 是不同维度。
 
 `agentRemote.enabled` 缺省 `true`；设为 `false` 后上述远程端点及 Agent Card 返回 404。`agentRemote.publicUrl` 设置反向代理后的基础地址；空时根据请求地址生成 Agent Card。
-
-<a id="rest"></a>
-
-<a id="restapiagent"></a>
 
 ## REST
 
@@ -94,8 +87,6 @@ curl -N "http://127.0.0.1:8765/api/agent/sessions/<SESSION_ID>/messages" \
 
 流每 15 秒发送保活。REST 的 HTTP 断开不会停止轮次；结果继续落库，可读取会话详情和列表确认终态。主动停止使用 `/stop`。拒绝审批会生成工具拒绝结果，供助手继续处理。
 
-<a id="mcppost-mcpstreamable-http"></a>
-
 ## MCP
 
 本实现接受两组交互方式：
@@ -134,9 +125,6 @@ POST 的 `Accept` 必须包含 `application/json` 和 `text/event-stream`，否�
 }
 ```
 
-<a id="工具集1-个"></a>
-<a id="外部-agent-直接运维"></a>
-
 ### 执行边界
 
 - 每条业务命令以 `elysia` 开头；通过 `elysia help` 查询语法。它不是系统 shell，也不是独立终端可执行文件。
@@ -148,12 +136,6 @@ POST 的 `Accept` 必须包含 `application/json` 和 `text/event-stream`，否�
 - 业务失败以 `isError: true` 返回，协议错误使用 JSON-RPC error；验证失败可能只有错误文本。查询优先用 `--limit`；`head` 只截文本行，输出仍可能被截断。
 
 完整语义见 [CLI 手册](agent-cli.md)。
-
-<a id="a2apost-a2a--agent-card"></a>
-<a id="任务模型"></a>
-<a id="方法"></a>
-<a id="审批恢复约定多轮核心"></a>
-<a id="幂等"></a>
 
 ## A2A
 
@@ -177,8 +159,6 @@ POST 的 `Accept` 必须包含 `application/json` 和 `text/event-stream`，否�
 ```
 
 v1.0 的 part 不使用 `kind`。审批缺少 data part 返回 `-32602`。不带 `taskId` 则在该会话创建新一轮。消息按 `messageId` 在单实例内存 LRU 中去重，不提供跨重启的持久幂等保证。Push notifications 与扩展卡未实现。
-
-<a id="安全要点"></a>
 
 ## 排障与权限
 

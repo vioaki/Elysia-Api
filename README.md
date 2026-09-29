@@ -129,7 +129,7 @@ docker run -d --name elysia-api \
 
    返回 JSON 中的 `choices[0].message.content` 即为模型回复。401 检查推理令牌；无可用模型时检查源、组成员及启停状态。
 
-   > 面板令牌用于管理；推理令牌用于 `/v1` 和 `/v1beta`；带 `agent` 作用域的 Key 用于远程运维。详见[鉴权说明](docs/remote-agent-api.md#authentication)。
+   > 面板令牌用于管理；推理令牌用于 `/v1` 和 `/v1beta`；带 `agent` 作用域的 Key 用于远程运维。详见[鉴权说明](docs/remote-agent-api.md#鉴权)。
 
 ## 配置
 

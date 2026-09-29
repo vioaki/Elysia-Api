@@ -106,8 +106,6 @@ npm run build:macos-app
 
 后端版本由构建脚本从最近 Git tag 解析，经 ldflags 注入 `/health`，无 tag 时为 `dev`。原生 App 的版本解析有自身回退逻辑，见打包脚本。CI 在 `v*` tag 或手动触发时构建平台产物；发布附带 SHA256 校验文件。
 
-<a id="documentation"></a>
-
 ## 文档维护
 
 - 先核对源码与测试，再更新中文及对应 `.en.md`；保留相同接口、参数、默认值和操作顺序。

@@ -12,12 +12,6 @@
     <a href="README.md">简体中文</a> · <strong>English</strong></p>
 </div>
 
-<a id="gateway-core"></a>
-<a id="supporting-capabilities"></a>
-<a id="management-agent"></a>
-<a id="no-code-protocol-dsl"></a>
-<a id="remote-orchestration"></a>
-
 ## Features
 
 - Protocols: OpenAI Chat Completions / Responses, Anthropic Messages, and Gemini GenerateContent; streaming conversion and same-protocol passthrough
@@ -41,8 +35,6 @@ See the [documentation index](docs/README.en.md) for capabilities and implementa
 
 ## Quick start
 
-<a id="1-download-a-release"></a>
-
 ### 1. Download
 
 Download a binary for your platform and the SHA256 checksum file from [GitHub Releases](https://github.com/PinkElysiaDev/Elysia-Api/releases/latest).
@@ -57,8 +49,6 @@ Download a binary for your platform and the SHA256 checksum file from [GitHub Re
 | macOS universal | `elysia-api-macos.dmg` |
 
 </details>
-
-<a id="2-start-the-service"></a>
 
 ### 2. Start
 
@@ -120,8 +110,6 @@ Run `docker logs elysia-api` to obtain the initial panel token. See [deployment]
 
 </details>
 
-<a id="3-connect-your-first-model"></a>
-
 ### 3. Connect a model
 
 1. Open `http://127.0.0.1:8765/ui/` and sign in with the panel token. For the macOS App, use the menu-bar address and its port in the call below.
@@ -140,11 +128,6 @@ Run `docker logs elysia-api` to obtain the initial panel token. See [deployment]
 
    The panel token is for management, relay tokens are for `/v1` and `/v1beta`, and keys with the `agent` scope are for remote operations. See [authentication](docs/remote-agent-api.en.md#authentication).
 
-<a id="legacy-configuration-migration"></a>
-<a id="operations-endpoints-and-data-backup"></a>
-<a id="operations-endpoints"></a>
-<a id="data-backup"></a>
-
 ## Configuration
 
 `config.json` stores listener settings, database paths, and runtime policies. Model sources, model groups, API tokens, and usage records are stored in SQLite.
@@ -162,20 +145,12 @@ The file is normally created automatically. This minimal manual configuration om
 
 See [deployment](docs/deployment.en.md) for configuration fields, environment variables, migration, backup, restore, and security settings.
 
-<a id="documentation"></a>
-
-<a id="maheshvara-and-the-no-code-protocol-dsl"></a>
-<a id="management-agent-and-remote-orchestration"></a>
-<a id="http-endpoints"></a>
-
 ## Further reading
 
 - [Custom protocols](docs/protocol-definition-reference.en.md)
 - [Remote AI agent access](docs/remote-agent-api.en.md)
 - [Management API](docs/webui-api.en.md)
 - [CLI reference](docs/agent-cli.en.md)
-
-<a id="project-structure"></a>
 
 ## Build
 

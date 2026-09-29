@@ -14,8 +14,6 @@ Authorization: Bearer <PANEL_TOKEN>
 
 The panel token comes from `config.json`. Browsers may also authenticate with the `panel_access_token` cookie. Relay tokens and Agent keys do not replace it. Requests normally use `Content-Type: application/json`.
 
-<a id="response-envelope"></a>
-
 ## Responses
 
 Management handlers normally return these envelopes:
@@ -31,8 +29,6 @@ Management handlers normally return these envelopes:
 Lists normally use `data.items`; paginated lists add `data.total`. Authentication middleware returns 401 as `{"error":"..."}`. Reload and SSE endpoints use their own formats; not every response contains `ok`.
 
 Common failures: 400 validation error; 401 invalid panel token; 404 missing object; 409 conflict or running task; 503 `store_unavailable`. Operation-specific codes include `save_source_failed`, `save_group_failed`, `save_token_failed`, and `usage_log_not_found`.
-
-<a id="bootstrap-configjson"></a>
 
 ## Bootstrap configuration
 
@@ -134,8 +130,6 @@ Clients use the group name as their requested `model`. Prefer `sourceId:modelId`
 
 Strategies: `round-robin`, `sequential`, `random`. `retryInterval` is in milliseconds. Zero concurrency or daily limits mean unlimited. Deleting a group may disable tokens authorized only for that group; `disabledTokens` lists them, preventing an empty allow list from unintentionally widening access.
 
-<a id="api-tokens"></a>
-
 ## API tokens
 
 ```json
@@ -171,8 +165,6 @@ Use RFC3339 timestamps and the range `[from, to)`. Repeat `keyName`, `groupName`
 
 `POST /api/admin/usage/cleanup` queues retention and physical space reclamation. `GET /api/admin/usage/maintenance` reports progress, blocking readers and failures. `POST /api/admin/usage/reset` synchronously clears request logs, aggregates and attachment references, returning `{reset, reclaimQueued}`; attachment files and database space are reclaimed in the background. See [deployment](deployment.en.md#request-logs) for capture and retention policies.
 
-<a id="protocol-agent-ai-assistant"></a>
-
 ## Protocols and assistant
 
 | Method | Path | Behavior |
@@ -187,8 +179,6 @@ Use RFC3339 timestamps and the range `[from, to)`. Repeat `keyName`, `groupName`
 See [protocol definitions](protocol-definition-reference.en.md) and frontend types `CustomProtocolPreviewResult` / `CustomProtocolTestResult` for request and result contracts.
 
 `/api/admin/agent/*` shares session handlers with [remote REST](remote-agent-api.en.md#rest), but uses the panel token. See that document for session creation/editing, messages, approvals, stopping, truncation, and draft restoration. The assistant operates through `elysia_cli`, with `ask_user` and `update_plan` as supporting tools. Model calls count toward usage with `relayMode=agent-assist`. Session views mask credentials; test-credential reuse is limited to protocol-testing commands.
-
-<a id="logs-and-health"></a>
 
 ## System logs and health
 

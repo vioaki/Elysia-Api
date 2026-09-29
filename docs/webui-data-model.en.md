@@ -4,8 +4,6 @@
 
 Core fields and semantics of management APIs. Use [frontend types.ts](../packages/webui/src/lib/types.ts), [storage types](../backend/storage/types.go), and [Agent types](../packages/webui/src/lib/agent/types.ts) to inspect complete definitions; handlers determine request/response behavior. The WebUI manages data over HTTP rather than reading configuration files directly.
 
-<a id="common-types"></a>
-
 ## Common types
 
 ```ts
@@ -24,8 +22,6 @@ type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 Legacy values `openai`, `openai-compatible`, and `claude` remain readable; use canonical wire identifiers for new configuration. Type fields such as `embedding` and `reranker` do not imply corresponding inference routes exist. See [API](webui-api.en.md) and [protocols](maheshvara-protocol.en.md).
 
-<a id="runtime-config"></a>
-
 ## Runtime config
 
 | Field | Semantics |
@@ -40,8 +36,6 @@ Legacy values `openai`, `openai-compatible`, and `claude` remain readable; use c
 | `agentRemote` | `enabled`, `publicUrl` |
 
 `RuntimeConfigUpdate` contains only writable management fields, not every returned field. Updates return `{updated, restartRequired}`. See [deployment](deployment.en.md#configuration) for defaults and restart requirements.
-
-<a id="model-source"></a>
 
 ## Model source
 
@@ -72,8 +66,6 @@ interface SourceAPIKey {
 
 If `allowedModels` is absent, use the fetched set. If both are absent, access is unrestricted. An explicit empty array disables all models for that key. Do not collapse absent and empty values.
 
-<a id="model-cache"></a>
-
 ## Model
 
 | Fields | Meaning |
@@ -88,8 +80,6 @@ If `allowedModels` is absent, use the fetched set. If both are absent, access is
 
 A catalog miss retains available manual capability values. Model capabilities can guide candidate selection; group capabilities constrain requests. They are not interchangeable.
 
-<a id="model-group"></a>
-
 ## Model group
 
 | Field | Semantics |
@@ -102,8 +92,6 @@ A catalog miss retains available manual capability values. Model capabilities ca
 | `type`, `maxTokens`, `visionCapable`, `toolsCapable` | Group type and capabilities |
 
 Deleting a group disables tokens that lose all explicitly authorized groups; an emptied allow list must not silently grant every group.
-
-<a id="api-token"></a>
 
 ## API token
 
@@ -143,8 +131,6 @@ interface UsageBody {
 `content` may contain JSON text but is not guaranteed to parse. Disabled capture leaves bodies empty; externalized media uses `__ELYSIA_ASSET__` placeholders. Truncation describes the logging copy, not necessarily the response delivered to the client.
 
 Frontend multi-select fields `keyNames`, `groupNames`, `modelNames`, and `sourceIds` in `UsageQueryParams` serialize as repeated singular query parameters. See the [API](webui-api.en.md#usage) for other filters.
-
-<a id="system-logs-and-health"></a>
 
 ## System logs and health
 

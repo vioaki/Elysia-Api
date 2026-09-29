@@ -41,7 +41,7 @@ The [CLI parser](../backend/server/agent_cli.go) dispatches commands to business
 
 Each MCP call creates a temporary CLI context. Reuse protocol drafts, test addresses and credentials within a single `command` batch. REST/A2A sessions are managed by the remote Agent service; see [remote access](remote-agent-api.en.md).
 
-Neither entry point provides a batch-wide transaction or automatic rollback. Combine only operations with known arguments that do not depend on intermediate results. Live upstream tests may incur charges; readable log bodies depend on the [capture policy](deployment.en.md#request-log-management).
+Neither entry point provides a batch-wide transaction or automatic rollback. Combine only operations with known arguments that do not depend on intermediate results. Live upstream tests may incur charges; readable log bodies depend on the [capture policy](deployment.en.md#request-logs).
 
 ## Verification
 
