@@ -1,0 +1,27 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "control",
+  "description": "Only the packaged React application can manage its bundled backend; browser WebUI has no desktop permissions.",
+  "windows": [
+    "control"
+  ],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "allow-desktop-state",
+    "allow-start-backend",
+    "allow-stop-backend",
+    "allow-set-port",
+    "allow-choose-data-directory",
+    "allow-open-data-directory",
+    "allow-open-log",
+    "allow-copy-api-address",
+    "allow-copy-panel-token",
+    "allow-check-updates",
+    "allow-install-update",
+    "allow-cancel-update",
+    "allow-set-autostart",
+    "allow-show-panel",
+    "allow-quit-app"
+  ]
+}

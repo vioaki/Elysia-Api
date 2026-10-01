@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import { ErrorBoundary } from './components/error-boundary'
 import { ThemeProvider } from './lib/theme'
+import { DesktopProvider } from './lib/desktop'
 import { ToastHost } from './components/ui/use-toast'
 import { TooltipProvider } from './components/ui/tooltip'
 import { preloadLoginAssets } from './lib/login-assets'
@@ -18,7 +19,7 @@ createRoot(document.getElementById('root')!).render(
       <ThemeProvider>
         <ToastHost>
           <TooltipProvider delayDuration={200}>
-            <App />
+            <DesktopProvider><App /></DesktopProvider>
           </TooltipProvider>
         </ToastHost>
       </ThemeProvider>

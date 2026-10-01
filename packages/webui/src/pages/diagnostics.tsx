@@ -17,7 +17,7 @@ import { SettingSection, SettingRow } from '@/components/ui/setting-card'
 import { ErrorState } from '@/components/ui/states'
 import { useHealth, useRuntimeConfig, revalidate, POLL } from '@/lib/hooks'
 import { useToast } from '@/components/ui/use-toast'
-import { api } from '@/lib/api'
+import { api, apiUrl, downloadApiFile } from '@/lib/api'
 import { formatBytes, formatNumber } from '@/lib/utils'
 
 export function DiagnosticsPage() {
@@ -140,7 +140,12 @@ export function DiagnosticsPage() {
                       {pprofEndpoints.map((item) => (
                         <a
                           key={item.path}
-                          href={item.path}
+                          href={apiUrl(item.path)}
+                          onClick={(event) => {
+                            if (apiUrl(item.path) === item.path) return
+                            event.preventDefault()
+                            void downloadApiFile(item.path).catch((error: Error) => toast.error('下载失败', error.message))
+                          }}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="group flex flex-col justify-between rounded-lg border border-border/50 bg-secondary/20 p-3 transition-colors hover:border-primary/50 hover:bg-wash"

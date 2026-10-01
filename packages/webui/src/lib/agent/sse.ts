@@ -1,4 +1,5 @@
 import { getToken } from "../auth";
+import { apiUrl } from "../api";
 import type { AgentStreamEvent } from "./types";
 
 /**
@@ -18,7 +19,7 @@ export async function streamAgentEvents(
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const response = await fetch(url, {
+  const response = await fetch(apiUrl(url), {
     method: "POST",
     headers,
     body: JSON.stringify(body),

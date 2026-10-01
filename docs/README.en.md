@@ -34,6 +34,7 @@ Deployment, protocols, APIs, and development for Elysia API. Start with [quick s
 | [Development](development.en.md) | Environment, local development, tests, cross-compilation, and release artifacts |
 | [WebUI development](../packages/webui/README.en.md) | Frontend commands, proxies, builds, and interaction conventions |
 | [macOS validation](macos-testing.en.md) | Native toolchain, automated checks, and device acceptance |
+| [Unified desktop (on hold)](desktop-archive.md) | Implementation archive and status (Chinese); [builds and acceptance](desktop-testing.en.md) |
 | [Login assets](../scripts/login-trace/README.en.md) | Extraction, review, asset validation, and performance reproduction |
 
 See the [changelog](../CHANGELOG.md) for changes by release.

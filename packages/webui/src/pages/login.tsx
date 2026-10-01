@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { DesktopSettingsDialog } from '@/components/desktop-settings'
 import { LoginCinematic } from '@/components/login-cinematic'
 import { useToast } from '@/components/ui/use-toast'
 import { useTheme } from '@/lib/theme'
@@ -199,6 +200,7 @@ export function LoginPage() {
           <span>Elysia API</span><span className="garden-brand-divider" /><span className="garden-console">Console</span>
         </div>
         <div className="garden-actions">
+          <DesktopSettingsDialog />
           <Tooltip>
             <TooltipTrigger asChild>
               <button type="button" className={cn('garden-tool garden-motion-toggle icon-toggle', switching && 'is-switching')} onClick={toggleMotion}

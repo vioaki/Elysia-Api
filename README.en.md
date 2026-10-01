@@ -39,6 +39,8 @@ See the [documentation index](docs/README.en.md) for capabilities and implementa
 
 Download a binary for your platform and the SHA256 checksum file from [GitHub Releases](https://github.com/PinkElysiaDev/Elysia-Api/releases/latest).
 
+The unified Tauri desktop implementation is on hold and archived on a separate branch. See the [archive overview](docs/desktop-archive.md) (Chinese) for its scope, rationale, and verification status. Stable downloads remain unchanged.
+
 <details>
 <summary>Release files</summary>
 

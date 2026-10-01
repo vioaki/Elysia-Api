@@ -1,0 +1,221 @@
+name: Build and preview unified desktop
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Semver, e.g. 1.2.0-desktop.1 (stable promotion: existing v1.2.0 release)'
+        type: string
+        required: true
+      publish:
+        description: 'Publish signed desktop assets; otherwise only upload workflow artifacts'
+        type: boolean
+        default: false
+      promote_stable:
+        description: 'Migration acceptance passed: replace latest stable Swift DMG and add desktop updater'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  metadata:
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      update_url: ${{ steps.version.outputs.update_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - id: version
+        name: Validate version and explicit promotion
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          PUBLISH: ${{ inputs.publish }}
+          PROMOTE: ${{ inputs.promote_stable }}
+        run: |
+          node --input-type=module <<'JS'
+          import { appendFileSync } from 'node:fs'
+          import { normalizeVersion } from './scripts/build-desktop.mjs'
+          const version = normalizeVersion(process.env.INPUT_VERSION)
+          const stable = process.env.PROMOTE === 'true'
+          if (stable && process.env.PUBLISH !== 'true') throw new Error('Stable promotion requires publish=true')
+          if (stable === version.includes('-')) throw new Error('Use a prerelease version for preview and a stable version for promotion')
+          const tag = `${stable ? 'v' : 'desktop-v'}${version}`
+          const path = stable ? 'latest/download' : 'download/desktop-preview'
+          appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\ntag=${tag}\nupdate_url=https://github.com/${process.env.GITHUB_REPOSITORY}/releases/${path}/latest.json\n`)
+          JS
+
+  build:
+    needs: metadata
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: universal-apple-darwin
+            runner: macos-latest
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+          - target: aarch64-pc-windows-msvc
+            runner: windows-11-arm
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-22.04
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-22.04
+            qemu: true
+    runs-on: ${{ matrix.runner }}
+    env:
+      DESKTOP_APP_VERSION: ${{ needs.metadata.outputs.version }}
+      ELYSIA_UPDATE_URL: ${{ needs.metadata.outputs.update_url }}
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          cache-dependency-path: backend/go.sum
+      - name: Check signing key configuration
+        shell: bash
+        run: test -n "$TAURI_SIGNING_PRIVATE_KEY" || { echo 'Configure the Tauri updater signing secrets; never commit the private key.' >&2; exit 1; }
+      - uses: dtolnay/rust-toolchain@stable
+        if: ${{ !matrix.qemu }}
+        with:
+          targets: ${{ matrix.target == 'universal-apple-darwin' && 'aarch64-apple-darwin,x86_64-apple-darwin' || matrix.target }}
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux' && !matrix.qemu
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf
+      - name: Install npm workspaces
+        if: ${{ !matrix.qemu }}
+        run: npm install
+      - name: Check release scripts
+        run: npm run test:desktop:release
+      - name: Build and sign desktop
+        if: ${{ !matrix.qemu }}
+        shell: bash
+        env:
+          DESKTOP_TARGET: ${{ matrix.target }}
+        run: npm run build:desktop -- --target "$DESKTOP_TARGET" --version "$DESKTOP_APP_VERSION" --update-url "$ELYSIA_UPDATE_URL" --updater
+      - uses: docker/setup-qemu-action@v3
+        if: matrix.qemu
+        with:
+          platforms: arm64
+      - name: Build Linux ARM64 on Ubuntu 22.04 under QEMU
+        if: matrix.qemu
+        shell: bash
+        run: |
+          export DESKTOP_NODE_VERSION="$(node --version)"
+          export DESKTOP_GO_VERSION="$(go env GOVERSION)"
+          docker run --rm --platform linux/arm64 \
+            --env CI=true --env APPIMAGE_EXTRACT_AND_RUN=1 \
+            --env DESKTOP_NODE_VERSION --env DESKTOP_GO_VERSION \
+            --env DESKTOP_APP_VERSION --env ELYSIA_UPDATE_URL \
+            --env TAURI_SIGNING_PRIVATE_KEY --env TAURI_SIGNING_PRIVATE_KEY_PASSWORD \
+            --volume "$PWD:/work" --workdir /work ubuntu:22.04 bash -euo pipefail -c '
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update
+              apt-get install -y ca-certificates curl wget file xz-utils build-essential pkg-config libwebkit2gtk-4.1-dev libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf git
+              curl -fsSL "https://nodejs.org/dist/${DESKTOP_NODE_VERSION}/node-${DESKTOP_NODE_VERSION}-linux-arm64.tar.xz" | tar -xJ --strip-components=1 -C /usr/local
+              curl -fsSL "https://go.dev/dl/${DESKTOP_GO_VERSION}.linux-arm64.tar.gz" | tar -xz -C /usr/local
+              curl --proto "=https" --tlsv1.2 -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal
+              export PATH="$HOME/.cargo/bin:/usr/local/go/bin:$PATH"
+              npm install
+              npm run build:desktop -- --target aarch64-unknown-linux-gnu --version "$DESKTOP_APP_VERSION" --update-url "$ELYSIA_UPDATE_URL" --updater
+            '
+      - name: Upload desktop packages and signatures
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.target }}
+          if-no-files-found: error
+          path: |
+            dist/desktop/${{ matrix.target }}/*.dmg
+            dist/desktop/${{ matrix.target }}/*.tar.gz
+            dist/desktop/${{ matrix.target }}/*.exe
+            dist/desktop/${{ matrix.target }}/*.AppImage
+            dist/desktop/${{ matrix.target }}/*.sig
+
+  release:
+    needs: [metadata, build]
+    runs-on: ubuntu-22.04
+    concurrency:
+      group: desktop-channel-${{ inputs.promote_stable && 'stable' || 'preview' }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DESKTOP_VERSION: ${{ needs.metadata.outputs.version }}
+      DESKTOP_TAG: ${{ needs.metadata.outputs.tag }}
+      PROMOTE: ${{ inputs.promote_stable }}
+      PUBLISH: ${{ inputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-*
+          path: dist/desktop-release
+          merge-multiple: true
+      - name: Require existing latest stable release and preserve server checksums
+        if: inputs.promote_stable
+        shell: bash
+        run: |
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)" = "$DESKTOP_TAG"
+          test "$(gh release view "$DESKTOP_TAG" --json isPrerelease --jq .isPrerelease)" = false
+          test "$(git rev-parse HEAD)" = "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$DESKTOP_TAG" --jq .object.sha)" || {
+            git fetch origin "refs/tags/$DESKTOP_TAG:refs/tags/$DESKTOP_TAG"
+            test "$(git rev-parse HEAD)" = "$(git rev-parse "$DESKTOP_TAG^{commit}")"
+          }
+          gh release download "$DESKTOP_TAG" --pattern SHA256SUMS --dir dist/server-release
+      - name: Write complete signed updater manifest
+        shell: bash
+        run: |
+          printf 'Unified desktop %s\n\nSee docs/desktop-testing.md for migration and acceptance requirements.\n' "$DESKTOP_VERSION" > dist/desktop-release-notes.md
+          options=()
+          if [[ "$PROMOTE" == true ]]; then options+=(--merge-checksums dist/server-release/SHA256SUMS); fi
+          npm run release:desktop:manifest -- --dir dist/desktop-release --version "$DESKTOP_VERSION" --repo "$GITHUB_REPOSITORY" --tag "$DESKTOP_TAG" --notes dist/desktop-release-notes.md "${options[@]}"
+      - name: Upload assembled release for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-release-${{ needs.metadata.outputs.version }}
+          if-no-files-found: error
+          path: dist/desktop-release/*
+      - name: Publish desktop prerelease and update preview channel
+        if: inputs.publish && !inputs.promote_stable
+        shell: bash
+        run: |
+          gh release create "$DESKTOP_TAG" dist/desktop-release/* --target "$GITHUB_SHA" --prerelease --latest=false --title "Unified desktop $DESKTOP_VERSION" --notes-file dist/desktop-release-notes.md
+          if ! gh release view desktop-preview >/dev/null 2>&1; then
+            gh release create desktop-preview --target "$GITHUB_SHA" --prerelease --latest=false --title 'Unified desktop preview channel' --notes 'The signed latest.json points to the current desktop prerelease.'
+          fi
+          gh release upload desktop-preview dist/desktop-release/latest.json --clobber
+      - name: Promote desktop into existing stable release
+        if: inputs.publish && inputs.promote_stable
+        shell: bash
+        run: |
+          assets=()
+          for file in dist/desktop-release/*; do
+            case "${file##*/}" in
+              latest.json|SHA256SUMS) ;;
+              *) assets+=("$file") ;;
+            esac
+          done
+          gh release upload "$DESKTOP_TAG" "${assets[@]}" --clobber
+          gh release upload "$DESKTOP_TAG" dist/desktop-release/SHA256SUMS --clobber
+          # Expose the updater pointer only after every package/signature is available.
+          gh release upload "$DESKTOP_TAG" dist/desktop-release/latest.json --clobber

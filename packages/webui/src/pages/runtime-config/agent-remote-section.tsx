@@ -9,7 +9,7 @@ import { RevealCopyButton } from '@/components/reveal-copy-button'
 import { useConfirm } from '@/components/ui/confirm-dialog'
 import { useToast } from '@/components/ui/use-toast'
 import { useTokens } from '@/lib/hooks'
-import { api } from '@/lib/api'
+import { api, apiOrigin } from '@/lib/api'
 import type { ApiToken } from '@/lib/types'
 import type { RuntimeConfigForm } from './use-runtime-config-form'
 import { MCPConfigCopyButton } from './mcp-config-copy-button'
@@ -37,7 +37,7 @@ export function AgentRemoteSection({
 }) {
   const enabled = form.agentRemote.enabled
   const publicBase =
-    form.agentRemote.publicUrl.trim() || window.location.origin
+    form.agentRemote.publicUrl.trim() || apiOrigin()
 
   return (
     <SettingSection
@@ -63,7 +63,7 @@ export function AgentRemoteSection({
           <Input id="runtime-public-url" aria-describedby="runtime-public-url-description"
             className="w-full font-mono text-xs"
             value={form.agentRemote.publicUrl}
-            placeholder={window.location.origin}
+            placeholder={apiOrigin()}
             onChange={(e) => onPublicUrlChange(e.target.value)}
           />
         </SettingRow>

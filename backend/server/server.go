@@ -79,7 +79,7 @@ type Server struct {
 	usageSeq       atomic.Uint64
 	usagePersistMu sync.Mutex
 	shutdownOnce   sync.Once
-	// shutdownDone 在关停序列（信号或 /__shutdown 触发）完成后 close，
+	// shutdownDone 在关停序列（信号、父进程 stdin EOF 或 /__shutdown 触发）完成后 close，
 	// ListenAndServe 据此等待收尾后再返回，避免进程驻留。
 	shutdownDone chan struct{}
 
@@ -136,6 +136,9 @@ func New(cfg *config.Config) *Server {
 	gin.SetMode(gin.ReleaseMode)
 	engine := gin.New()
 	engine.Use(gin.Recovery())
+	if os.Getenv("ELYSIA_API_DESKTOP_ORIGIN") == "1" {
+		engine.Use(desktopOriginMiddleware)
+	}
 	// gin.Logger 会为每个请求打一行访问日志。正常运行只保留 Recovery，
 	// 仅在调试模式下启用访问日志。
 	if cfg.DebugMode {
@@ -1376,23 +1379,38 @@ func (s *Server) ListenAndServe() error {
 	}
 	launchConsoleBrowser(s.config.OpenBrowserOnStart, s.config.Server.Host, s.config.Server.Port)
 
-	// 信号与 /__shutdown 共用同一关停序列（shutdownOnce 去重），完成后 close
-	// shutdownDone；ListenAndServe 返回 ErrServerClosed 时等待它，确保两种触发
-	// 方式下进程都能真正退出（此前仅信号路径会通知，/__shutdown 会永久阻塞主
-	// goroutine，表现为端口已关但进程驻留）。
+	// 信号、父进程 stdin EOF 与 /__shutdown 共用同一关停序列（shutdownOnce 去重）。
+	// Serve 返回 ErrServerClosed 后等待 shutdownDone，确保收尾完成才退出。
 	s.shutdownDone = make(chan struct{})
+	serveDone := make(chan struct{})
+	defer close(serveDone)
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
 	defer signal.Stop(sigCh)
 	go func() {
-		<-sigCh
-		log.Printf("Shutdown signal received, draining...")
-		s.shutdownOnce.Do(s.runShutdownSequence)
+		select {
+		case <-sigCh:
+			log.Printf("Shutdown signal received, draining...")
+			s.shutdownOnce.Do(s.runShutdownSequence)
+		case <-serveDone:
+		}
 	}()
+	if os.Getenv("ELYSIA_API_SHUTDOWN_ON_STDIN_EOF") == "1" {
+		// Desktop mode owns stdin as its parent-lifetime pipe. Closing it on
+		// return releases the reader after HTTP/signal shutdown as well.
+		stdin := os.Stdin
+		defer stdin.Close()
+		go func() {
+			if _, err := io.Copy(io.Discard, stdin); err == nil {
+				log.Printf("Parent stdin closed, draining...")
+				s.shutdownOnce.Do(s.runShutdownSequence)
+			}
+		}()
+	}
 
 	err := s.httpServer.Serve(listener)
 	if err == http.ErrServerClosed {
-		// 主动关停(信号或 /__shutdown)属正常退出;等待关停序列完成。
+		// 主动关停(信号、stdin EOF 或 /__shutdown)属正常退出;等待关停序列完成。
 		<-s.shutdownDone
 		log.Printf("Server stopped gracefully")
 		return nil

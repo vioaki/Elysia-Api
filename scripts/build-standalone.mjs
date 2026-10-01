@@ -1,7 +1,8 @@
-import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { mkdirSync, rmSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
+import { prepareWebui } from './prepare-webui.mjs'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -15,8 +16,6 @@ function resolveAppVersion() {
 const appVersion = resolveAppVersion()
 const releaseDir = join(repoRoot, 'dist', 'standalone')
 const backendDir = join(repoRoot, 'backend')
-const webuiDist = join(repoRoot, 'packages', 'webui', 'dist')
-const embeddedWebuiDist = join(backendDir, 'webui', 'dist')
 
 // 与主机无关，六个目标全部交叉编译。darwin 二进制同时是 macOS DMG 的组装输入；
 // DMG 只能在 macOS 上组装，发布时由 CI 产出（本地可用 npm run build:macos-app）。
@@ -52,33 +51,7 @@ function log(message) {
   console.log(`==> ${message}`)
 }
 
-function stripTrailingWhitespace(dir) {
-  for (const entry of readdirSync(dir)) {
-    const path = join(dir, entry)
-    const stat = statSync(path)
-    if (stat.isDirectory()) {
-      stripTrailingWhitespace(path)
-      continue
-    }
-    if (!/\.(css|html|js)$/.test(entry)) continue
-    const content = readFileSync(path, 'utf8')
-    const normalized = content.replace(/[ \t]+$/gm, '')
-    if (normalized !== content) {
-      writeFileSync(path, normalized)
-    }
-  }
-}
-
-log('Building WebUI')
-run('npm', ['run', 'build', '--workspace', '@root/webui'])
-
-log('Syncing WebUI assets into backend/webui/dist')
-rmSync(embeddedWebuiDist, { recursive: true, force: true })
-mkdirSync(embeddedWebuiDist, { recursive: true })
-cpSync(webuiDist, embeddedWebuiDist, { recursive: true })
-stripTrailingWhitespace(embeddedWebuiDist)
-// 恢复 embed 占位文件：go:embed all:dist 依赖目录非空，该文件被 git 跟踪。
-writeFileSync(join(embeddedWebuiDist, '.gitkeep'), '')
+prepareWebui()
 
 log('Preparing standalone release directory')
 rmSync(releaseDir, { recursive: true, force: true })

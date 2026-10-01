@@ -1297,7 +1297,7 @@ func (s *Server) adminSystemLogs(c *gin.Context) {
 func (s *Server) adminHealth(c *gin.Context) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
-	respondOK(c, gin.H{"status": "ok", "database": s.store != nil, "memory": gin.H{"alloc": mem.Alloc, "sys": mem.Sys, "numGC": mem.NumGC}})
+	respondOK(c, gin.H{"status": "ok", "database": s.store != nil, "processID": os.Getpid(), "memory": gin.H{"alloc": mem.Alloc, "sys": mem.Sys, "numGC": mem.NumGC}})
 }
 
 func usageQueryFromRequest(c *gin.Context) storage.UsageQuery {

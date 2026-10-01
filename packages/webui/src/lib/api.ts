@@ -46,6 +46,45 @@ function throwUnauthorized(): never {
 }
 
 const ADMIN_BASE = '/api/admin'
+let desktopApiAddress = ''
+
+/** Desktop supplies its owned sidecar origin before mounting API consumers. */
+export function setDesktopApiAddress(address: string): void {
+  if (!address) {
+    desktopApiAddress = ''
+    return
+  }
+  const url = new URL(address)
+  if (/\s/.test(address) || url.hostname.includes('%') || url.protocol !== 'http:' || url.username || url.password
+    || url.pathname !== '/' || url.search || url.hash) {
+    throw new Error('桌面 API 地址必须是自身服务的 HTTP origin')
+  }
+  desktopApiAddress = url.origin
+}
+
+export function apiOrigin(): string {
+  return desktopApiAddress || window.location.origin
+}
+
+/** Keep browser requests relative; desktop API paths use the owned sidecar. */
+export function apiUrl(path: string): string {
+  if (!path.startsWith('/') || path.startsWith('//')) throw new Error('API 路径必须以单个 / 开头')
+  return `${desktopApiAddress}${path}`
+}
+
+/** Desktop links cannot share a cookie with the backend's HTTP origin. */
+export async function downloadApiFile(path: string): Promise<void> {
+  const token = getToken()
+  const response = await fetch(apiUrl(path), { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (response.status === 401) throwUnauthorized()
+  if (!response.ok) throw new ApiError('download_failed', `文件获取失败（${response.status}）`, response.status)
+  const url = URL.createObjectURL(await response.blob())
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = path.split('/').at(-1) || 'download'
+  anchor.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
 
 type QueryValue = string | number | boolean | undefined | null | string[]
 
@@ -57,7 +96,7 @@ interface RequestOptions {
 }
 
 function buildUrl(path: string, query?: RequestOptions['query']): string {
-  const url = `${ADMIN_BASE}${path}`
+  const url = apiUrl(`${ADMIN_BASE}${path}`)
   if (!query) return url
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(query)) {
@@ -131,7 +170,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 export async function verifyToken(token: string): Promise<void> {
   let response: Response
   try {
-    response = await fetch(`${ADMIN_BASE}/health`, {
+    response = await fetch(buildUrl('/health'), {
       headers: { Authorization: `Bearer ${token}` },
       signal: AbortSignal.timeout(15_000),
     })
@@ -358,4 +397,3 @@ function serializeUsage(params: UsageQueryParams): Record<string, QueryValue> {
     ...(params.sourceIds?.length ? { sourceId: params.sourceIds } : {}),
   }
 }
-

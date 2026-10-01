@@ -1,9 +1,11 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { getToken, subscribeToken, syncCookieFromStorage } from './lib/auth'
 import { api } from './lib/api'
 import { setCustomProtocolDisplayNames } from './lib/protocol'
 import { AppLayout } from './components/app-layout'
+import { DesktopRecovery } from './components/desktop-settings'
+import { useDesktop } from './lib/desktop'
 
 // 页面按路由拆包：recharts 等重组件只随用到它的页面下载，
 // 登录页与首屏外壳保持轻量。
@@ -95,11 +97,13 @@ function useCustomProtocolNames(enabled: boolean) {
 
 export function App() {
   const token = useAuthState()
-  usePreloadRoutes(!!token)
-  useCustomProtocolNames(!!token)
+  const desktop = useDesktop()
+  usePreloadRoutes(!!token && desktop.ready)
+  useCustomProtocolNames(!!token && desktop.ready)
 
   return (
     <HashRouter>
+      <DesktopNavigation authenticated={!!token} />
       <Suspense fallback={<BootFallback />}>
         {token ? (
           <Routes>
@@ -118,7 +122,7 @@ export function App() {
             </Route>
             <Route path="*" element={<Navigate to="/overview" replace />} />
           </Routes>
-        ) : (
+        ) : desktop.enabled && !desktop.ready ? <DesktopRecovery login /> : (
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
@@ -127,4 +131,16 @@ export function App() {
       </Suspense>
     </HashRouter>
   )
+}
+
+function DesktopNavigation({ authenticated }: { authenticated: boolean }) {
+  const { settingsRequest, ready } = useDesktop()
+  const handled = useRef(settingsRequest)
+  const navigate = useNavigate()
+  useEffect(() => {
+    if (settingsRequest === handled.current) return
+    handled.current = settingsRequest
+    if (authenticated && ready) navigate('/runtime?tab=desktop')
+  }, [authenticated, ready, settingsRequest, navigate])
+  return null
 }

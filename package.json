@@ -11,6 +11,10 @@
     "build": "node scripts/build-standalone.mjs",
     "test:macos-app": "node scripts/test-macos-app.mjs",
     "build:macos-app": "node scripts/build-macos-app.mjs",
+    "build:desktop": "node scripts/build-desktop.mjs",
+    "build:desktop:backend": "node scripts/build-desktop.mjs --sidecar-only",
+    "test:desktop:release": "node --test scripts/test-desktop-release.mjs",
+    "release:desktop:manifest": "node scripts/release-desktop-manifest.mjs",
     "build:webui": "npm run build --workspace @root/webui",
     "lint": "npm exec eslint -- packages/webui --cache --ext=ts,tsx",
     "lint-fix": "npm exec eslint -- packages/webui --cache --ext=ts,tsx --fix"

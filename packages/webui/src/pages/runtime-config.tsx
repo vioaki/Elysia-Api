@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
+import { useSearchParams } from "react-router-dom";
 import {
   AlertTriangle,
   Database,
@@ -45,6 +46,8 @@ import {
 import { api, ApiError } from "@/lib/api";
 import { formatRelative, formatBytes, cn } from "@/lib/utils";
 import type { LogLevel } from "@/lib/types";
+import { useDesktop } from "@/lib/desktop";
+import { DesktopSettings } from "@/components/desktop-settings";
 
 // 目录数据来源的展示名。
 function catalogSourceLabel(source: string): string {
@@ -67,12 +70,46 @@ const configTabs = [
   ["logs", "日志与存储"],
   ["catalog", "模型目录"],
 ] as const;
-type ConfigTab = typeof configTabs[number][0];
+type ConfigTab = typeof configTabs[number][0] | "desktop";
 
 export function RuntimeConfigPage() {
+  const desktop = useDesktop();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const visibleTabs: readonly (readonly [ConfigTab, string])[] = desktop.enabled ? [...configTabs, ["desktop", "桌面应用"]] : configTabs;
+  const requestedTab = searchParams.get("tab");
+  const activeTab: ConfigTab = requestedTab === "desktop" && desktop.enabled || configTabs.some(([tab]) => tab === requestedTab) ? requestedTab as ConfigTab : "basic";
+  const desktopSelected = activeTab === "desktop";
+  const [serviceVisited, setServiceVisited] = useState(!desktopSelected);
+  useEffect(() => { if (!desktopSelected) setServiceVisited(true); }, [desktopSelected]);
+
+  function changeTab(tab: ConfigTab) {
+    setSearchParams({ tab }, { replace: true });
+    // 长分类滚动后切换短分类时，从表单顶部开始阅读。
+    if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  return <>
+    {desktopSelected && <Tabs.Root value={activeTab} onValueChange={(value) => changeTab(value as ConfigTab)} className="relative z-[1]">
+      <PageHeader title="运行配置" />
+      <div className="border-b border-border/40 pb-1">
+        <TitleTabs aria-label="配置分类" value={activeTab} options={visibleTabs.map(([value, label]) => ({ value, label }))} />
+      </div>
+      <Tabs.Content value="desktop" className="pt-6 outline-none"><DesktopSettings /></Tabs.Content>
+    </Tabs.Root>}
+    {(serviceVisited || !desktopSelected) && <div hidden={desktopSelected}>
+      <ServiceRuntimeConfig activeTab={activeTab} changeTab={changeTab} visibleTabs={visibleTabs} />
+    </div>}
+  </>;
+}
+
+// Keep visited service form edits while switching tabs; desktop-only visits need no Go config.
+function ServiceRuntimeConfig({ activeTab, changeTab, visibleTabs }: {
+  activeTab: ConfigTab;
+  changeTab(tab: ConfigTab): void;
+  visibleTabs: readonly (readonly [ConfigTab, string])[];
+}) {
   const toast = useToast();
   const { confirm, dialog } = useConfirm();
-  const [activeTab, setActiveTab] = useState<ConfigTab>("basic");
   const headerTopRef = useRef<HTMLDivElement>(null);
   const [headerPinned, setHeaderPinned] = useState(false);
   const [reloading, setReloading] = useState(false);
@@ -148,14 +185,6 @@ export function RuntimeConfigPage() {
       toast.error("触发清理失败", (err as Error).message);
     } finally {
       setCleaning(false);
-    }
-  }
-
-  function changeTab(tab: ConfigTab) {
-    setActiveTab(tab);
-    // 长分类滚动后切换短分类时，从表单顶部开始阅读。
-    if (window.scrollY > 0) {
-      window.scrollTo({ top: 0, behavior: "auto" });
     }
   }
 
@@ -300,7 +329,7 @@ export function RuntimeConfigPage() {
           headerPinned && "bg-background/65 backdrop-blur-xl backdrop-saturate-150 max-rail:pl-[72px]",
         )}>
           <div className="min-w-0 flex-1">
-            <TitleTabs aria-label="配置分类" value={activeTab} options={configTabs.map(([value, label]) => ({ value, label }))} />
+            <TitleTabs aria-label="配置分类" value={activeTab} options={visibleTabs.map(([value, label]) => ({ value, label }))} />
           </div>
           <div className="flex shrink-0 items-center gap-2.5">
             <Button variant="ghost" onClick={() => void handleReload()} disabled={saving || reloading}>

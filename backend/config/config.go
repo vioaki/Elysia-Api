@@ -965,6 +965,7 @@ func init() {
 	}
 
 	configFile := flag.String("config", "", "Path to config file")
+	initConfigOnly := flag.Bool("init-config", false, "Create or validate config and exit without starting the server")
 	flag.Parse()
 
 	if *configFile == "" {
@@ -984,4 +985,7 @@ func init() {
 
 	GlobalConfig = cfg
 	log.Println("Config loaded successfully")
+	if *initConfigOnly {
+		os.Exit(0)
+	}
 }

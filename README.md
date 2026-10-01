@@ -39,6 +39,8 @@
 
 从 [GitHub Releases](https://github.com/PinkElysiaDev/Elysia-Api/releases/latest) 下载对应平台预编译产物，附 SHA256 校验文件。
 
+统一桌面版的 Tauri 实现暂时搁置，仅在独立分支存档；变更介绍、暂缓原因及验证范围见[桌面版存档说明](docs/desktop-archive.md)。当前稳定下载入口保持不变。
+
 | 平台                  | 文件名                             |
 | ------------------- | ------------------------------- |
 | Windows amd64/arm64 | `elysia-api-windows-{arch}.exe` |

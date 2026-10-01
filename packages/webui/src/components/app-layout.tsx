@@ -9,6 +9,10 @@ import { ARRIVED_FROM_LOGIN_KEY, readArrivedFromLogin } from '@/lib/auth'
 import { ROLE_ANCHOR_CLASS, roleMaskStyle } from '@/lib/role-presentation'
 import { cn } from '@/lib/utils'
 import { Z_INDEX } from '@/lib/z-index'
+import { useDesktop } from '@/lib/desktop'
+import { DesktopRecovery } from './desktop-settings'
+
+function UsageLive() { useUsageLive(); return null }
 
 /**
  * 交接残影：登录页的线稿以 0.45 浓度原地交接的瞬间，控制台外壳正从透明
@@ -34,7 +38,8 @@ export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
   const mainRef = useRef<HTMLElement>(null)
-  useUsageLive()
+  const desktop = useDesktop()
+  const ready = desktop.ready
 
   // 仅登录到达时外壳渐显（app-fade）；刷新与普通路由跳转保持无动画。
   // 初始化器读取标记，移除由 ElysiaStage 的 effect 负责。
@@ -70,6 +75,7 @@ export function AppLayout() {
 
   return (
     <div className={cn(arriving && 'app-fade', 'grid min-h-dvh grid-cols-[228px_minmax(0,1fr)] max-rail:grid-cols-1')}>
+      {ready && <UsageLive />}
       {arriving && <ArrivalEcho />}
       <a
         href="#main-content"
@@ -137,7 +143,7 @@ export function AppLayout() {
               </div>
             }
           >
-            <Outlet />
+            {ready ? <Outlet /> : <DesktopRecovery />}
           </Suspense>
         </div>
       </main>
